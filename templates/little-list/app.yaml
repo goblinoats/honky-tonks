@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: MIT
+# Tonk asserted notation. Repeated top-level keys are intentional.
+attribute!: &ht-task-title
+  description: "The text of a task"
+  the: org.honky-tonks.task/title
+  as: text
+  cardinality: one
+
+concept!: &ht-task
+  description: "An active task in Little List"
+  with:
+    title: ht-task-title
+
+command!: &ht-add-task
+  with:
+    title:
+      description: "Task text from the form"
+      the: dom.event.current-target.form.elements.task/value
+      as: text
+    nonce:
+      description: "Distinguishes repeated task text"
+      the: dom.event/time-stamp
+      as: float
+
+rule!:
+  assert!: ht-task
+  when:
+    - assert: ht-add-task
+      where: { this: ?this, title: ?title, nonce: ?nonce }
+
+command!: &ht-complete-task
+  with:
+    task:
+      description: "The task to complete"
+      the: dom.event.current-target.dataset/ht-task
+      as: entity
+
+rule!:
+  retract!: ht-task
+  when:
+    - assert: ht-complete-task
+      where: { task: ?this }
+    - assert: ht-task
+      where: { this: ?this, title: ?title }
+
+view!:
+  this: ht-task
+  show:
+    title: Little List
+    label: "{title}"
+    ui: |
+      <article class="ht-task-row">
+        <span>{title}</span>
+        <button type="button" onclick=ht-complete-task data-ht-task={this}>Done</button>
+      </article>
+    directory: |
+      <style>
+        .ht-list { max-width:720px; margin:32px auto; padding:32px; background:#fffef8; color:#32372b; font:16px/1.6 Arial,sans-serif; }
+        .ht-list h1 { font-size:32px; font-weight:500; }
+        .ht-list form { display:flex; gap:12px; margin-bottom:20px; }
+        .ht-list input { min-width:0; flex:1; padding:12px; border:1px solid #ddded0; border-radius:4px; font:inherit; }
+        .ht-list button { padding:10px 16px; border:1px solid #d2d7c3; background:#d0e49a; border-radius:4px; font:inherit; cursor:pointer; }
+        .ht-task-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-bottom:1px solid #e7e9dd; }
+        .ht-task-row span { overflow-wrap:anywhere; }
+      </style>
+      <section class="ht-list">
+        <h1>Little List</h1>
+        <form>
+          <input name="task" aria-label="Task" placeholder="What needs doing?">
+          <button type="button" onclick=ht-add-task>Add task</button>
+        </form>
+        <article subject={this}><tonk-display entity={this} model=ht-task></tonk-display></article>
+      </section>

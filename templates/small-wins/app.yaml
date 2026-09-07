@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: MIT
+attribute!: &ht-win-name
+  description: "What this counter celebrates"
+  the: org.honky-tonks.win/name
+  as: text
+  cardinality: one
+
+attribute!: &ht-win-count
+  description: "Number of small wins"
+  the: org.honky-tonks.win/count
+  as: unsigned-integer
+  cardinality: one
+
+concept!: &ht-win
+  description: "A counter in Small Wins"
+  with:
+    name: ht-win-name
+    count: ht-win-count
+
+command!: &ht-increment-win
+  with:
+    win:
+      description: "The counter to increment"
+      the: dom.event.current-target.dataset/ht-win
+      as: entity
+
+rule!:
+  assert!: ht-win
+  when:
+    - assert: ht-increment-win
+      where: { win: ?this }
+    - assert: ht-win
+      where: { this: ?this, name: ?name, count: ?old }
+    - assert: math/sum
+      where: { of: ?old, with: 1, is: ?count }
+
+view!:
+  this: ht-win
+  show:
+    title: Small Wins
+    label: "{name}: {count}"
+    ui: |
+      <article class="ht-win-card">
+        <p>{name}</p>
+        <strong>{count}</strong>
+        <button type="button" onclick=ht-increment-win data-ht-win={this}>+ One small win</button>
+        <p>Every little bit counts.</p>
+      </article>
+    directory: |
+      <style>
+        .ht-wins { max-width:600px; margin:32px auto; padding:32px; background:#fffcf5; color:#4b4030; text-align:center; font:16px/1.6 Arial,sans-serif; }
+        .ht-wins h1 { font-size:32px; font-weight:500; }
+        .ht-win-card strong { display:block; font-size:100px; line-height:1.5; font-weight:400; }
+        .ht-win-card button { padding:16px 32px; border:1px solid #dfba81; background:#f3cc90; border-radius:4px; font:inherit; cursor:pointer; }
+      </style>
+      <section class="ht-wins">
+        <h1>Small Wins</h1>
+        <article subject={this}><tonk-display entity={this} model=ht-win></tonk-display></article>
+      </section>
+
+# Install once: re-evaluating this assertion resets the counter.
+ht-win!: &ht-reading
+  this: id:ht-reading
+  name: "Made time to read"
+  count: 0

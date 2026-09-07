@@ -1,0 +1,7 @@
+# Optional example data. Evaluate after app.yaml.
+ht-note!: &ht-ready
+  body: "Start before you feel ready. A little reminder for a Monday morning."
+
+ht-note!: &ht-attention
+  body: "Good things take a little attention."
+

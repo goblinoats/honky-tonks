@@ -1,0 +1,33 @@
+schemaVersion: 1
+slug: little-list
+name: Little List
+summary: A place for the things you need to do. Add a task, finish it, and make room for what's next.
+description: |
+  Little List is a deliberately small task list. Write a task, add it to the list, and mark it done when it is out of the way.
+  Tasks live as facts in your Tonk space. The app uses declarative views and event rules, so you can change its appearance or build on its data without a separate backend.
+category: Everyday
+version: 1.0.0
+license: MIT
+author:
+  name: Honky Tonks contributors
+  url: null
+  contact: null
+features:
+  - Add tasks from a simple input
+  - Complete tasks to remove them from the active list
+  - Data stored in your Tonk space
+  - Declarative HTML and CSS views, without external services
+images:
+  - file: preview.svg
+    alt: Little List interface illustration showing a task input and three tasks
+    caption: Interface illustration with example tasks; the Tonk host may render it differently.
+files:
+  - file: app.yaml
+    description: Task schema, add and complete commands, rules, and views
+  - file: examples.yaml
+    description: Three optional example tasks
+    optional: true
+entrypoint: ht-task
+compatibility: Tonk CLI 0.6.12 notation and standard library
+notes: Completing a task retracts it from the active list. This starter does not keep a completed-task archive.
+

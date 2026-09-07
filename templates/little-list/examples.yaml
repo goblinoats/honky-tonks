@@ -1,0 +1,10 @@
+# Optional example data. Evaluate after app.yaml.
+ht-task!: &ht-dinner
+  title: "Pick up something for dinner"
+
+ht-task!: &ht-walk
+  title: "Take the long way home"
+
+ht-task!: &ht-idea
+  title: "Send that idea to a friend"
+

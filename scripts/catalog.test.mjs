@@ -1,0 +1,57 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, cp, readFile, writeFile, rm, symlink } from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { parse, stringify } from 'yaml';
+import { loadCatalog, root } from './catalog.mjs';
+async function fixture(run) {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'honky-catalog-test-'));
+  try {
+    await cp(path.join(root, 'templates/little-list'), path.join(tmp, 'little-list'), { recursive: true });
+    await run(tmp);
+  } finally { await rm(tmp, { recursive: true, force: true }); }
+}
+async function change(tmp, update) {
+  const p = path.join(tmp, 'little-list/template.yaml');
+  const value = parse(await readFile(p, 'utf8'));
+  update(value);
+  await writeFile(p, stringify(value));
+}
+test('bundled templates preserve notation bytes and file order', async () => {
+  const templates = await loadCatalog();
+  assert.ok(templates.length > 0);
+  for (const t of templates) for (const f of t.files) {
+    assert.equal(f.source, await readFile(path.join(root, 'templates', t.slug, f.file), 'utf8'));
+    assert.match(f.sha256, /^[a-f0-9]{64}$/);
+  }
+});
+test('rejects unsafe contacts, missing files, and escaping paths', async () => {
+  for (const mutate of [
+    t => { t.author.contact = 'javascript:alert(1)'; },
+    t => { t.files[0].file = '../outside.yaml'; },
+    t => { t.images[0].file = 'missing.png'; },
+    t => { t.slug = 'another-slug'; },
+    t => { t.files[0].optional = 'false'; },
+  ]) await fixture(async tmp => { await change(tmp, mutate); await assert.rejects(loadCatalog(tmp)); });
+});
+test('rejects duplicate manifest keys but accepts repeated Tonk heads', async () => {
+  await fixture(async tmp => {
+    await loadCatalog(tmp);
+    const p = path.join(tmp, 'little-list/template.yaml');
+    await writeFile(p, (await readFile(p, 'utf8')) + '\nname: Duplicate\n');
+    await assert.rejects(loadCatalog(tmp), /unique|same|map keys/i);
+  });
+});
+test('rejects active SVG and symlink source files', async () => {
+  await fixture(async tmp => {
+    await writeFile(path.join(tmp, 'little-list/preview.svg'), '<svg><script>alert(1)</script></svg>');
+    await assert.rejects(loadCatalog(tmp), /passive/);
+  });
+  await fixture(async tmp => {
+    const p = path.join(tmp, 'little-list/app.yaml');
+    await rm(p);
+    await symlink(path.join(root, 'templates/little-list/app.yaml'), p);
+    await assert.rejects(loadCatalog(tmp), /escapes/);
+  });
+});
