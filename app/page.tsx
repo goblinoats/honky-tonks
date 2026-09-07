@@ -2,9 +2,8 @@ import { templates, asset } from '../lib/catalog';
 export default function Home() {
   return <>
     <section className="intro">
-      <p className="eyebrow">SMALL SOFTWARE, SHARED.</p>
-      <h1>Find your next little thing.</h1>
-      <p>A collection of apps to make your own. Pick a Tonk, take the YAML,<br className="desktop-break" /> and give it a home in your space.</p>
+      <h1>Honky Tonks</h1>
+      <p>Small software to take home. Browse the collection, read the YAML,<br className="desktop-break" /> and bring an application into your Tonk space.</p>
     </section>
     <section aria-labelledby="collection-title">
       <div className="section-heading"><h2 id="collection-title">The collection</h2><span>{templates.length} starter templates</span></div>
@@ -17,7 +16,6 @@ export default function Home() {
         </a>
       </article>)}</div>
     </section>
-    <aside className="contribute-strip"><div><h2>Made something useful?</h2><p>Give your small software a life beyond your own space.</p></div><a className="button" href={asset('contribute/')}>Contribute a Tonk <span aria-hidden="true">↗</span></a></aside>
+    <aside className="contribute-strip"><div><h2>Add to the collection</h2><p>Share an application with a pull request.</p></div><a className="button" href={asset('contribute/')}>Contribute a Tonk</a></aside>
   </>;
 }
-
