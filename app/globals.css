@@ -71,7 +71,7 @@ h1 { font-size: 55px; font-weight: 500; line-height: 1.1; letter-spacing: -.6px;
 .button::after { content: ''; position: absolute; left: .161em; top: .214em; right: .107em; bottom: 0; border: solid var(--foreground); border-width: 1px 1px .179em .179em; pointer-events: none; transition: transform .1s ease; }
 .button:hover::after { transform: translate(-.08em,-.107em); }
 .button:active { --fill-x: .081em; --fill-y: .107em; --fill-w: calc(100% - .268em); --fill-h: calc(100% - .214em); }
-.button.secondary { background: none; }
+.button.secondary { background: none; color: var(--foreground); }
 .site-footer { border-top: 1px solid var(--foreground); padding: 36px 0 40px; margin-top: 56px; font: 16px/1.5 var(--font-display); }
 .site-footer div { display: flex; gap: 32px; flex-wrap: wrap; }
 .site-footer a { text-decoration: none; }
