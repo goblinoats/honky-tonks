@@ -2,11 +2,7 @@ import { templates, asset } from '../lib/catalog';
 import Collection from './collection';
 
 export default function Home() {
-  const entries = [...templates].sort((a, b) => {
-    if (a.slug === 'small-wins') return -1;
-    if (b.slug === 'small-wins') return 1;
-    return a.name.localeCompare(b.name);
-  }).map(t => ({
+  const entries = [...templates].sort((a, b) => a.name.localeCompare(b.name)).map(t => ({
     slug: t.slug, name: t.name, summary: t.summary, author: t.author.name,
     href: asset(`templates/${t.slug}/`),
     image: asset(`content/${t.slug}/${t.images[0].file}`), alt: t.images[0].alt,

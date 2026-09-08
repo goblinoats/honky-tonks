@@ -8,12 +8,12 @@ import { loadCatalog, root } from './catalog.mjs';
 async function fixture(run) {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'honky-catalog-test-'));
   try {
-    await cp(path.join(root, 'templates/little-list'), path.join(tmp, 'little-list'), { recursive: true });
+    await cp(path.join(root, 'templates/starter-space'), path.join(tmp, 'starter-space'), { recursive: true });
     await run(tmp);
   } finally { await rm(tmp, { recursive: true, force: true }); }
 }
 async function change(tmp, update) {
-  const p = path.join(tmp, 'little-list/template.yaml');
+  const p = path.join(tmp, 'starter-space/template.yaml');
   const value = parse(await readFile(p, 'utf8'));
   update(value);
   await writeFile(p, stringify(value));
@@ -38,20 +38,21 @@ test('rejects unsafe contacts, missing files, and escaping paths', async () => {
 test('rejects duplicate manifest keys but accepts repeated Tonk heads', async () => {
   await fixture(async tmp => {
     await loadCatalog(tmp);
-    const p = path.join(tmp, 'little-list/template.yaml');
+    const p = path.join(tmp, 'starter-space/template.yaml');
     await writeFile(p, (await readFile(p, 'utf8')) + '\nname: Duplicate\n');
     await assert.rejects(loadCatalog(tmp), /unique|same|map keys/i);
   });
 });
 test('rejects active SVG and symlink source files', async () => {
   await fixture(async tmp => {
-    await writeFile(path.join(tmp, 'little-list/preview.svg'), '<svg><script>alert(1)</script></svg>');
+    await change(tmp, t => { t.images[0].file = 'preview.svg'; });
+    await writeFile(path.join(tmp, 'starter-space/preview.svg'), '<svg><script>alert(1)</script></svg>');
     await assert.rejects(loadCatalog(tmp), /passive/);
   });
   await fixture(async tmp => {
-    const p = path.join(tmp, 'little-list/app.yaml');
+    const p = path.join(tmp, 'starter-space/1-vault.yaml');
     await rm(p);
-    await symlink(path.join(root, 'templates/little-list/app.yaml'), p);
+    await symlink(path.join(root, 'templates/starter-space/1-vault.yaml'), p);
     await assert.rejects(loadCatalog(tmp), /escapes/);
   });
 });
