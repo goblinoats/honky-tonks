@@ -64,7 +64,8 @@
 .column pre { font-size: 15px; line-height: 1.55; padding: 24px 28px; }
 .column pre code { background: none; padding: 0; font-size: inherit; }
 .column summary { font: inherit; text-decoration: underline; text-underline-offset: 3px; }
-.minorHeading { font: 500 24px/1.2 var(--font-display); margin: 2em 0 .5em; }
+.column .minorHeading { font: 500 24px/1.2 var(--font-display); margin: 2em 0 .5em; scroll-margin-top: 32px; }
+.column > .minorHeading:first-child { margin-top: 0; }
 
 @media (max-width: 860px) {
   .article { --tile: 150px; --gap: 10px; --col: 100%; padding: 56px 0 64px; }

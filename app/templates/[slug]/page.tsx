@@ -55,20 +55,16 @@ export default async function Template({ params }: Props) {
       <div className={styles.column}>{t.description.trim().split('\n').map((p, i) => <p key={i}>{p}</p>)}</div>
       {moreImages.map(figure)}
 
-      <section className={styles.section}>
-        <ArticleHeading text="Features" />
+      <section className={styles.section} id="details">
+        <ArticleHeading text="Details" />
         <div className={styles.column}>
+          <h3 className={styles.minorHeading}>Features</h3>
           <ul>{t.features.map(f => <li key={f}>{f}</li>)}</ul>
           <p>{t.notes}</p>
           <p><strong>Compatibility.</strong> {t.compatibility}</p>
           <p><strong>License.</strong> {t.license}</p>
           <p>{t.author.contact ? <a href={t.author.contact}>Contact the author</a> : <a href={`${site.repository}/issues`}>Contact project maintainers</a>}</p>
-        </div>
-      </section>
-
-      <section className={styles.section} id="source">
-        <ArticleHeading text="Source files" />
-        <div className={styles.column}>
+          <h3 className={styles.minorHeading} id="source">Source files</h3>
           <p>Read the source or download the files below. They are listed in evaluation order; example data is optional.</p>
           <ol className={styles.files}>{t.files.map(f => <li key={f.file}>
             <a href={asset(`content/${t.slug}/${f.file}.txt`)}><code>{f.file}</code></a>
@@ -76,16 +72,11 @@ export default async function Template({ params }: Props) {
             <a href={asset(`content/${t.slug}/${f.file}`)} download>Download {f.file}</a>
           </li>)}</ol>
           <p><a href={sourceUrl}>View on GitHub</a>{' · '}<a href={asset(`content/${t.slug}/template.yaml`)}>Template manifest</a>{' · '}<a href={asset('catalog.json')}>Metadata & checksums</a></p>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <ArticleHeading text="Installation" />
-        <div className={styles.column}>
+          <h3 className={styles.minorHeading}>Installation</h3>
           <p>Download the required files above. Replace <code>YOUR_SPACE</code> with your space name, then preview before installing. {required.length > 1 ? 'Combine the required files in the listed order into combined.yaml first.' : ''}</p>
           <pre><code>{`tonk --space YOUR_SPACE eval ${installFile} --dry-run\ntonk --space YOUR_SPACE eval ${installFile}`}</code></pre>
           <p>Open the <code>{t.entrypoint}</code> concept in Tonk. To use it as your space’s home, add <code>--home {t.entrypoint}</code> when installing. Optional example files go afterwards.</p>
-          <details><summary>Read the required YAML here</summary>{required.map(f => <div key={f.file}><h3 className={styles.minorHeading}>{f.file}</h3><pre><code>{f.source}</code></pre></div>)}</details>
+          <details><summary>Read the required YAML here</summary>{required.map(f => <div key={f.file}><h4 className={styles.minorHeading}>{f.file}</h4><pre><code>{f.source}</code></pre></div>)}</details>
           <p><a href={asset('')}>Back to the collection</a></p>
         </div>
       </section>
