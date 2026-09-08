@@ -9,6 +9,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="en"><head>
     <link rel="alternate" type="application/json" href={asset('catalog.json')} title="Tonk template catalog" />
+    <link rel="preload" href={asset('fonts/IBMPlexMono-Regular.ttf')} as="font" type="font/ttf" crossOrigin="anonymous" />
+    <style>{`@font-face{font-family:'IBM Plex Mono';src:url('${asset('fonts/IBMPlexMono-Regular.ttf')}') format('truetype');font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:'IBM Plex Mono';src:url('${asset('fonts/IBMPlexMono-Bold.ttf')}') format('truetype');font-weight:700;font-style:normal;font-display:swap}`}</style>
   </head><body>
     <a className="skip-link" href="#main">Skip to content</a>
     <aside className="contribution-banner" aria-label="Contribute a template">

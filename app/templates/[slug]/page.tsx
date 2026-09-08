@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { templates, asset, site } from '../../../lib/catalog';
+import ScreenshotGallery from '../../screenshot-gallery';
 
 type Props = { params: Promise<{ slug: string }> };
 export const dynamicParams = false;
@@ -27,10 +28,10 @@ export default async function Template({ params }: Props) {
     </nav>
     <article className="detail-panel">
       <h1 className="detail-title">{t.name}</h1>
+      <ScreenshotGallery name={t.name} images={t.images.slice(0, 5).map(img => ({ src: asset(`content/${t.slug}/${img.file}`), alt: img.alt, caption: img.caption }))} />
       <section className="description-section" aria-labelledby="description-title">
         <h2 id="description-title">Description</h2>
         <div className="description-copy">
-          <p>{t.images[0].caption}</p>
           {t.description.trim().split('\n').map((p, i) => <p key={i}>{p}</p>)}
         </div>
         <div className="features"><h3>Features</h3><ul>{t.features.map(f => <li key={f}>{f}</li>)}</ul></div>
