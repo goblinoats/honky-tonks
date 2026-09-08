@@ -9,9 +9,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="en"><head>
     <link rel="alternate" type="application/json" href={asset('catalog.json')} title="Tonk template catalog" />
-    <link rel="preload" href={asset('fonts/gestalte-regular.otf')} as="font" type="font/otf" crossOrigin="anonymous" />
-    <link rel="preload" href={asset('fonts/charter_regular.woff2')} as="font" type="font/woff2" crossOrigin="anonymous" />
-    <style>{`@font-face{font-family:Gestalte;src:url('${asset('fonts/gestalte-regular.otf')}') format('opentype');font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:Gestalte;src:url('${asset('fonts/gestalte-medium.otf')}') format('opentype');font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:Charter;src:url('${asset('fonts/charter_regular.woff2')}') format('woff2');font-weight:400;font-style:normal;font-display:swap}`}</style>
   </head><body>
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="site-shell"><header className="site-header">

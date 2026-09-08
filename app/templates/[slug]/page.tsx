@@ -12,18 +12,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return t ? { title: t.name, description: t.summary } : { title: 'Template not found' };
 }
 
-// Same letter-tile geometry and alphabet artwork as Tonk's Log articles.
 function ArticleHeading({ text, as: Heading = 'h2' }: { text: string; as?: 'h1' | 'h2' }) {
-  const first = text.charAt(0);
-  if (!/^[A-Za-z]$/.test(first)) {
-    return <div className={styles.headingBlock}><Heading className={styles.plainHeading}>{text}</Heading></div>;
-  }
-  return <div className={styles.headingBlock}>
-    <div className={styles.letterTile} aria-hidden="true">
-      <img src={asset(`brand/alphabet/${first.toUpperCase()}.svg`)} alt="" width="320" height="320" />
-    </div>
-    <Heading className={styles.heading}><span className={styles.srOnly}>{first}</span>{text.slice(1)}</Heading>
-  </div>;
+  return <Heading>{text}</Heading>;
 }
 
 export default async function Template({ params }: Props) {
