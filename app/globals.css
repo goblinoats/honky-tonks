@@ -32,14 +32,16 @@ body:has(.collection-page) .contribution-banner { border-bottom-color: transpare
 .collection-table th:first-child { padding-left: 14px; }
 .collection-table td { vertical-align: top; border-left: 1px solid var(--ink); border-right: 1px solid var(--ink); }
 .collection-band td { height: 32px; background: var(--plum); padding: 0; border-color: var(--plum); }
+.template-row { position: relative; cursor: pointer; }
 .template-row td { padding: 18px 20px 14px; }
 .template-row:hover, .template-row:focus-within { background: #f0e7f3; }
 .template-row .template-preview { padding: 8px 0; }
-.template-preview a, .template-preview img { display: block; width: 100%; }
+.template-preview img { display: block; width: 100%; }
 .template-preview img { height: auto; aspect-ratio: 3 / 2; }
-.template-name a, .template-description a { text-decoration: none; }
-.template-name a:hover, .template-description a:hover { text-decoration: underline; }
-.template-description a { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.template-name a { text-decoration: none; }
+.template-name a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+.template-name a:focus-visible::after { outline: 2px solid var(--plum); outline-offset: -2px; }
+.template-description span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .template-author { overflow-wrap: anywhere; }
 .collection-space td { height: 46vh; border-bottom: 1px solid var(--ink); }
 .empty-result td { padding: 24px 20px; }
@@ -121,7 +123,7 @@ body:has(.collection-page) .contribution-banner { border-bottom-color: transpare
   .collection-table .template-row .template-preview { padding: 0; }
   .template-preview img { width: 100%; height: auto; aspect-ratio: 3 / 2; }
   .collection-table .template-row .template-name { padding-top: 28px; padding-bottom: 30px; }
-  .template-description a { display: block; overflow: visible; }
+  .template-description span { display: block; overflow: visible; }
   .collection-table .template-row .template-author { padding-top: 96px; padding-bottom: 37px; }
   .empty-result, .empty-result td { display: block; }
   .detail-page { margin: 40px 12px 60px; font-size: 14px; line-height: 1.35; }

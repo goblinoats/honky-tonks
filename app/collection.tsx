@@ -23,9 +23,9 @@ export default function Collection({ entries }: { entries: Entry[] }) {
       <TableBody>
         <TableRow className="collection-band" aria-hidden="true"><TableCell colSpan={4} /></TableRow>
         {matches.map(t => <TableRow className="template-row" key={t.slug}>
-          <TableCell className="template-preview"><a href={t.href} aria-label={`View ${t.name}`}><img src={t.image} alt={t.alt} width="960" height="640" /></a></TableCell>
+          <TableCell className="template-preview"><img src={t.image} alt={t.alt} width="960" height="640" /></TableCell>
           <TableCell className="template-name"><a href={t.href}>{t.name}</a></TableCell>
-          <TableCell className="template-description"><a href={t.href}>{t.summary}</a></TableCell>
+          <TableCell className="template-description"><span>{t.summary}</span></TableCell>
           <TableCell className="template-author">{t.author}</TableCell>
         </TableRow>)}
         {!matches.length && <TableRow className="empty-result"><TableCell colSpan={4}>No templates match “{query}”. <button type="button" onClick={() => setQuery('')}>Clear search</button></TableCell></TableRow>}
