@@ -33,7 +33,7 @@ for (const file of htmlFiles) {
 }
 for (const t of catalog.templates) {
   const html = await readFile(path.join(output, 'templates', t.slug, 'index.html'), 'utf8');
-  if (!html.includes(t.name) || !html.includes('Get the YAML')) throw new Error(`Missing prerendered template: ${t.slug}`);
+  if (!html.includes(t.name) || !html.includes('Download Files')) throw new Error(`Missing prerendered template: ${t.slug}`);
   for (const f of t.files) {
     const bytes = await readFile(path.join(output, 'content', t.slug, f.file));
     if (createHash('sha256').update(bytes).digest('hex') !== f.sha256) throw new Error(`Checksum mismatch: ${t.slug}/${f.file}`);
@@ -41,4 +41,3 @@ for (const t of catalog.templates) {
 }
 if (!htmlFiles.length) throw new Error('No static HTML exported');
 console.log(`Verified ${htmlFiles.length} static HTML files, local links, template content, and source checksums.`);
-

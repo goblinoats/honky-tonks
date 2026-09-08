@@ -1,6 +1,6 @@
 # Honky Tonks
 
-A small, Git-backed gallery of Tonk application templates. Humans browse image cards and detail pages; agents read the same static HTML, `catalog.json`, `llms.txt`, and original YAML source.
+A small, Git-backed gallery of Tonk application templates. Humans search a desktop table or mobile cards and open detail pages; agents read the same static HTML, `catalog.json`, `llms.txt`, and original YAML source. Download bundles contain each template's original YAML, manifest, and images.
 
 - [Public gallery](https://goblinoats.github.io/honky-tonks/)
 - [Contribute a template](CONTRIBUTING.md)
@@ -8,7 +8,7 @@ A small, Git-backed gallery of Tonk application templates. Humans browse image c
 
 ## Run locally
 
-Requires Node 22.13+ and npm.
+Requires Node 22.13+, npm, and `zip` (included on macOS and the Ubuntu CI runner) to build template download bundles.
 
 ```sh
 npm ci

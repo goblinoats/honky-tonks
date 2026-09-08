@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile, cp, rm } from 'node:fs/promises';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { root, loadCatalog } from './catalog.mjs';
 
 const templates = await loadCatalog();
@@ -23,6 +24,8 @@ for (const t of templates) {
   }
   // Plain text companions render directly in agents and browsers.
   for (const f of t.files) await writeFile(path.join(target, f.file + '.txt'), f.source);
+  // A static download bundle preserves every original file and its relative path.
+  execFileSync('zip', ['-q', '-X', path.join(target, `${t.slug}.zip`), 'template.yaml', ...t.images.map(i => i.file), ...t.files.map(f => f.file)], { cwd: source });
 }
 await mkdir(path.join(root, 'generated'), { recursive: true });
 await writeFile(path.join(root, 'generated/catalog.json'), JSON.stringify({ basePath, site, templates }, null, 2) + '\n');
@@ -35,6 +38,7 @@ const catalog = {
     ...t,
     url: asset(`templates/${t.slug}/`),
     manifest: asset(`content/${t.slug}/template.yaml`),
+    download: asset(`content/${t.slug}/${t.slug}.zip`),
     repositoryPath: `templates/${t.slug}`,
     sourceUrl: `${site.repository}/tree/${site.branch}/templates/${t.slug}`,
     images: t.images.map(i => ({ ...i, url: asset(`content/${t.slug}/${i.file}`) })),
@@ -66,4 +70,3 @@ Use tonk help notation, tonk help views, and tonk help events for the installed 
 await cp(path.join(root, 'CONTRIBUTING.md'), path.join(publicDir, 'CONTRIBUTING.md'));
 await writeFile(path.join(publicDir, '.nojekyll'), '');
 console.log(`Prepared ${templates.length} templates and agent catalog (base path: ${basePath || '/'}).`);
-

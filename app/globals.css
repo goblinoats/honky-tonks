@@ -1,1 +1,131 @@
-/* Intentionally blank: this version uses the browser's default styles. */
+/* The supplied Honky Tonk PNGs are the visual specification. */
+:root { color-scheme: light; --ink: #212121; --plum: #38182a; --rule: #555; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: #fff; font: 20px/1.2 'Courier New', Courier, monospace; }
+a { color: inherit; text-underline-offset: 3px; }
+button, input, code, pre { font: inherit; }
+button, summary { cursor: pointer; }
+img { max-width: 100%; }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--plum); outline-offset: 4px; }
+.sr-only, .skip-link:not(:focus) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.skip-link:focus { position: absolute; z-index: 10; padding: 12px; background: white; }
+.contribution-banner { height: 45px; padding: 11px 16px 10px; overflow: hidden; border-bottom: 1px solid var(--rule); }
+.contribution-track { display: flex; width: max-content; white-space: nowrap; }
+.contribution-track span { padding-right: 12px; }
+.contribution-track img { vertical-align: baseline; }
+body:has(.collection-page) .contribution-banner { border-bottom-color: transparent; }
+.collection-page { max-width: 1020px; margin: 0 auto; padding-top: 88px; }
+.ascii-heading { margin: 0 0 57px; line-height: 0; }
+.ascii-heading img { display: block; width: 100%; height: auto; }
+.template-search { margin: 0; }
+.template-search input { display: block; width: 100%; height: 52px; padding: 12px 20px; border: 1px solid var(--plum); border-bottom-width: 5px; border-radius: 0; color: var(--ink); background: #fff; appearance: none; }
+.template-search input::placeholder { color: #777; opacity: 1; }
+.collection-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 34px; }
+.preview-col { width: 13%; }
+.name-col { width: 22.4%; }
+.description-col { width: 43.9%; }
+.author-col { width: 20.7%; }
+.collection-table th { text-align: left; font-weight: 400; padding: 3px 20px 15px; }
+.collection-table th:first-child { padding-left: 14px; }
+.collection-table td { vertical-align: top; border-left: 1px solid var(--ink); border-right: 1px solid var(--ink); }
+.collection-band td { height: 32px; background: var(--plum); padding: 0; border-color: var(--plum); }
+.template-row td { padding: 18px 20px 14px; }
+.template-row .template-preview { padding: 8px 0; }
+.template-preview a, .template-preview img { display: block; width: 100%; }
+.template-preview img { height: auto; aspect-ratio: 3 / 2; }
+.template-name a, .template-description a { text-decoration: none; }
+.template-name a:hover, .template-description a:hover { text-decoration: underline; }
+.template-description a { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.template-author { overflow-wrap: anywhere; }
+.collection-space td { height: 46vh; border-bottom: 1px solid var(--ink); }
+.empty-result td { padding: 24px 20px; }
+.empty-result button { border: 0; background: none; color: inherit; padding: 0; text-decoration: underline; }
+.detail-page { max-width: 1210px; margin: 136px auto 226px; }
+.detail-nav { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.detail-nav > div { display: flex; gap: 36px; }
+.detail-panel { border: 1px solid var(--rule); }
+.detail-title { margin: -1px -1px 0; padding: 17px 25px 13px; background: var(--plum); color: #fff; font-size: 32px; line-height: 1; font-weight: 700; }
+.description-section { padding: 37px 34px 22px; }
+.detail-panel h2 { font-size: 20px; line-height: 1.2; font-weight: 700; color: var(--plum); margin: 0 0 20px; }
+.description-copy { max-width: 1010px; }
+.description-copy p, .installation-copy p { margin: 0; }
+.features { margin-top: 48px; }
+.features h3 { margin: 0; font: inherit; }
+.features ul { margin: 0; padding-left: 22px; }
+.download-button { display: inline-block; margin-top: 56px; padding: 18px 38px; background: var(--ink); color: #fff; text-decoration: none; }
+.download-button:hover { background: var(--plum); }
+.contact-authors { margin: 78px 4px 0; }
+.template-facts { margin: 0; }
+.fact-row { display: grid; grid-template-columns: 172px minmax(0, 1fr); border-top: 1px solid var(--rule); padding: 18px 38px; }
+.fact-row dt { font-weight: 700; color: var(--plum); }
+.fact-row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.source-row { padding-top: 16px; padding-bottom: 46px; }
+.source-disclosure summary { list-style: none; width: 36px; min-height: 32px; padding: 6px 2px 14px; }
+.source-disclosure summary::-webkit-details-marker { display: none; }
+.disclosure-chevron { display: block; width: 8px; height: 8px; border-top: 2px solid var(--ink); border-right: 2px solid var(--ink); transform: rotate(135deg); }
+.source-disclosure[open] .disclosure-chevron { transform: rotate(-45deg); }
+.source-files { list-style: none; padding: 0; margin: 30px 0 0; }
+.source-files li { display: grid; grid-template-columns: 195px minmax(0, 1fr); gap: 26px; margin-top: 26px; }
+.source-files li:first-child { margin-top: 0; }
+.source-files a { overflow-wrap: anywhere; }
+.source-metadata { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; margin-top: 84px; }
+.installation-section { border-top: 1px solid var(--rule); padding: 30px 34px 50px; }
+.github-link { display: inline-block; margin: 0 4px 50px; color: var(--plum); }
+.installation-section h2 { margin: 0 4px 40px; }
+.installation-copy { max-width: 1010px; }
+.installation-copy pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.yaml-disclosure summary { list-style: none; }
+.yaml-disclosure summary::-webkit-details-marker { display: none; }
+.yaml-disclosure summary:hover { text-decoration: underline; }
+.yaml-disclosure h3 { font-size: 1em; margin: 24px 0 12px; }
+.yaml-disclosure[open] pre { margin-bottom: 24px; }
+.utility-page { max-width: 1020px; margin: 136px auto; }
+.utility-page .back-link { display: inline-block; margin-bottom: 26px; }
+.utility-page .prose { border: 1px solid var(--rule); padding: 34px; }
+.utility-page h1 { background: var(--plum); color: #fff; font-size: 32px; margin: -35px -35px 34px; padding: 18px 34px; }
+.utility-page h2 { color: var(--plum); font-size: 20px; margin-top: 40px; }
+.utility-page pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.utility-page .inline-links { display: flex; flex-wrap: wrap; gap: 24px; }
+.utility-page li { margin-bottom: 12px; }
+@media (min-width: 641px) and (max-width: 1280px) {
+  .collection-page, .utility-page { width: calc(100% - 80px); }
+  .detail-page { width: calc(100% - 80px); }
+}
+@media (max-width: 640px) {
+  body { font-size: 20px; }
+  .contribution-banner { display: none; }
+  .collection-page { padding-top: 67px; }
+  .ascii-heading { display: none; }
+  .template-search input { height: 57px; border-bottom-width: 10px; }
+  .collection-table { display: block; margin-top: 0; }
+  .collection-table colgroup, .collection-table thead, .collection-band, .collection-space { display: none; }
+  .collection-table tbody { display: block; }
+  .collection-table .template-row { display: flex; flex-direction: column; border: 1px solid var(--plum); border-top: 0; margin-bottom: 28px; }
+  .collection-table .template-row td { display: block; border: 0; padding: 0 19px; }
+  .collection-table .template-row .template-preview { padding: 0; }
+  .template-preview img { width: 100%; height: auto; aspect-ratio: 3 / 2; }
+  .collection-table .template-row .template-name { padding-top: 28px; padding-bottom: 30px; }
+  .template-description a { display: block; overflow: visible; }
+  .collection-table .template-row .template-author { padding-top: 96px; padding-bottom: 37px; }
+  .empty-result, .empty-result td { display: block; }
+  .detail-page { margin: 40px 12px 60px; font-size: 14px; line-height: 1.35; }
+  .detail-nav { align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+  .detail-nav > div { gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+  .detail-title { padding: 16px; font-size: 25px; }
+  .description-section { padding: 24px 16px 20px; }
+  .detail-panel h2 { font-size: 15px; }
+  .features { margin-top: 30px; }
+  .download-button { margin-top: 30px; padding: 16px 24px; }
+  .contact-authors { margin: 44px 0 0; }
+  .fact-row { grid-template-columns: 108px minmax(0, 1fr); gap: 8px; padding: 16px 12px; }
+  .source-row { padding-bottom: 30px; }
+  .source-files { margin-top: 14px; }
+  .source-files li { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; margin-top: 22px; }
+  .source-metadata { gap: 14px; margin-top: 40px; }
+  .installation-section { padding: 24px 16px 30px; }
+  .github-link { margin: 0 0 32px; }
+  .installation-section h2 { margin: 0 0 28px; }
+  .utility-page { margin: 40px 12px; font-size: 16px; }
+  .utility-page .prose { padding: 20px; }
+  .utility-page h1 { margin: -21px -21px 24px; padding: 18px 20px; font-size: 25px; }
+}
