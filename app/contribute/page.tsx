@@ -1,8 +1,8 @@
 import { asset, site } from '../../lib/catalog';
 export const metadata = { title: 'Contribute a Tonk', description: 'Add an open Tonk app to the gallery with a pull request.' };
 export default function Contribute() {
-  return <><a className="back-link" href={asset('')}>← Back to the collection</a><article className="prose"><p className="eyebrow">CONTRIBUTE</p><h1>Pass a little<br />software along.</h1><p>A Tonk joins the collection through a pull request. Its description, images, and YAML live together in one folder. Once the request is reviewed and merged, the site rebuilds automatically.</p>
-    <a className="button" href={site.repository}>Open the repository ↗</a>
+  return <><a className="back-link" href={asset('')}>Back to the collection</a><article className="prose"><h1>Pass a little<br />software along.</h1><p>A Tonk joins the collection through a pull request. Its description, images, and YAML live together in one folder. Once the request is reviewed and merged, the site rebuilds automatically.</p>
+    <a className="button" href={site.repository}>Open the repository</a>
     <h2>One template, one folder</h2><pre><code>{`templates/your-tonk/\n  template.yaml\n  app.yaml\n  preview.png\n  detail.png       # optional extra image\n  examples.yaml    # optional sample data`}</code></pre>
     <ol><li>Fork the repository and copy one of the starter template folders. Rename it and set the same slug in <code>template.yaml</code>.</li><li>Add your name, public contact link, description, features, license, compatibility, and entrypoint concept. List images with useful alt text and list source files in evaluation order.</li><li>Keep the application’s Tonk notation in its own YAML files. Include everything needed for a fresh space, and mark sample data optional.</li><li>Run <code>npm ci</code>, <code>npm test</code>, and <code>npm run build</code>. Try the app in a fresh Tonk space and describe the checks in your pull request.</li><li>Open a pull request. A maintainer reviews the source and merges it into the collection.</li></ol>
     <h2>Show what people will get</h2><p>Include at least one clear image. Screenshots are best; label interface illustrations as illustrations. Detail pages show all images in the order you list them. Use images you have permission to share.</p>
@@ -10,4 +10,3 @@ export default function Contribute() {
     <p><a href={asset('CONTRIBUTING.md')}>Read the full contribution format</a> · <a href={`${site.repository}/issues`}>Contact the maintainers</a></p>
   </article></>;
 }
-

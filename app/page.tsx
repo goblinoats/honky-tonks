@@ -10,7 +10,7 @@ export default function Home() {
       <div className="gallery">{templates.map(t => <article className="template-card" key={t.slug}>
         <a className="card-link" href={asset(`templates/${t.slug}/`)}>
           <div className="preview"><img src={asset(`content/${t.slug}/${t.images[0].file}`)} alt={t.images[0].alt} width="960" height="640" /></div>
-          <div className="card-title"><h3>{t.name}</h3><span aria-hidden="true">↗</span></div>
+          <div className="card-title"><h3>{t.name}</h3></div>
           <p>{t.summary}</p>
           <div className="card-meta"><span>{t.category}</span><span>{t.author.name}</span></div>
         </a>
