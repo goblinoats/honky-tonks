@@ -1,0 +1,41 @@
+{
+  "date": "2026-09-10",
+  "workerSha256": "01b08764f782131a7a2cadc5db05a8007376e69036c9d08bb20fcc92096604ae",
+  "wrangler": "4.130.0",
+  "vitest": "4.1.0",
+  "cloudflareVitestPlugin": "1.1.6",
+  "runtimeTests": {
+    "passed": 11,
+    "failed": 0,
+    "actualWorkerd": true,
+    "actualHibernationEviction": true,
+    "closeEvictionReconnect": true,
+    "staleEpochAttachmentRejected": true
+  },
+  "offlineSetupTests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "externalLocalWebSocketSmoke": {
+    "passed": true,
+    "clients": 2,
+    "origins": [
+      "https://tonk.network",
+      "null"
+    ],
+    "endpoint": "127.0.0.1:18772"
+  },
+  "bundleDryRun": {
+    "passed": true,
+    "uploadKiB": 10.69,
+    "gzipKiB": 3.44
+  },
+  "cloudflareDeployed": false,
+  "productionTonkChanged": false,
+  "limitations": [
+    "Cloudflare internet deployment and quota behavior untested",
+    "No claimed bounded dead-peer detection deadline",
+    "Browser WebRTC acceptance recorded separately by root",
+    "Rate boundary and recipient budget tests set synthetic exhausted state via test-only runtime introspection"
+  ]
+}

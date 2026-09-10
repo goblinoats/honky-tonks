@@ -4,7 +4,7 @@ import { mkdtemp, cp, readFile, writeFile, rm, symlink } from 'node:fs/promises'
 import path from 'node:path';
 import os from 'node:os';
 import { parse, stringify } from 'yaml';
-import { loadCatalog, root } from './catalog.mjs';
+import { loadCatalog, pageCatalog, root } from './catalog.mjs';
 async function fixture(run) {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'honky-catalog-test-'));
   try {
@@ -25,6 +25,21 @@ test('bundled templates preserve notation bytes and file order', async () => {
     assert.equal(f.source, await readFile(path.join(root, 'templates', t.slug, f.file), 'utf8'));
     assert.match(f.sha256, /^[a-f0-9]{64}$/);
   }
+});
+test('page catalog excludes optional payloads without changing source downloads', async () => {
+  const templates = await loadCatalog();
+  const original = structuredClone(templates);
+  const pages = pageCatalog(templates);
+  for (const [i, t] of templates.entries()) for (const [j, f] of t.files.entries()) {
+    const rendered = pages[i].files[j];
+    assert.equal(rendered.source, f.optional ? '' : f.source);
+    const { source: originalSource, ...metadata } = f;
+    const { source: pageSource, ...renderedMetadata } = rendered;
+    assert.deepEqual(renderedMetadata, metadata);
+  }
+  assert.deepEqual(templates, original);
+  const sample = [{ files: [{ file: 'media.yaml', optional: true, source: 'optional payload' }] }];
+  assert.ok(!JSON.stringify(pageCatalog(sample)).includes('optional payload'));
 });
 test('rejects unsafe contacts, missing files, and escaping paths', async () => {
   for (const mutate of [

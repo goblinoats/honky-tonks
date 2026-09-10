@@ -4,6 +4,16 @@ import { createHash } from 'node:crypto';
 import { parseDocument } from 'yaml';
 
 export const root = path.resolve(import.meta.dirname, '..');
+
+// Detail pages inline required notation only. Optional media can contain megabytes
+// of base64: retain its metadata, but keep those bytes in the downloadable files.
+export function pageCatalog(templates) {
+  return templates.map(t => ({
+    ...t,
+    files: t.files.map(f => ({ ...f, source: f.optional ? '' : f.source })),
+  }));
+}
+
 const fail = message => { throw new Error(message); };
 const text = (value, label, max = 12000) => {
   if (typeof value !== 'string' || !value.trim() || value.length > max) fail(`${label}: expected non-empty text (max ${max})`);

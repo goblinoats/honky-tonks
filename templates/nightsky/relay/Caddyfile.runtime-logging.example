@@ -1,0 +1,18 @@
+# FRAGMENT for the existing global options block, NOT a replacement Caddyfile.
+# Merge with its existing default logger; keep unrelated logging requirements.
+# No debug mode. Access log filtering alone does not sanitize HTTP error logs.
+log default {
+    level INFO
+    output file /var/log/caddy/runtime-sanitized.log {
+        roll_size 10MiB
+        roll_keep 3
+        roll_keep_for 168h
+    }
+    format filter {
+        wrap json
+        fields {
+            request>uri delete
+            request>headers delete
+        }
+    }
+}
