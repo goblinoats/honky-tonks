@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-10",
+  "result": "passed-local-browser-acceptance",
+  "environment": {
+    "sameMac": true,
+    "relay": "local Wrangler/workerd",
+    "relayPort": 18772,
+    "opaqueIframeOrigin": "null",
+    "fixture": "temporary local HTTP fixture using actual Nightsky listening components",
+    "cloudflareAccountDeployment": false,
+    "nativeTonkPersistenceTest": false
+  },
+  "source": {
+    "workerSha256": "01b08764f782131a7a2cadc5db05a8007376e69036c9d08bb20fcc92096604ae",
+    "fixtureCoreSha256": "c9e30093585f04e41dbeec2933f03f3293e61819f11b0e29a1b741df47d758fb",
+    "finalCoreSha256": "89b2bca4fe767a3a40261e346b19554b6173c936b23f72476032510204f1163b",
+    "allTenListeningComponentsIdentical": true,
+    "listeningComponentSha256": {
+      "nightsky-kit": "32889bdf7d0477742cfbaad73bb45b95ab9c3084699dd0d064c0ff94dbbb710d",
+      "nightsky-dialogue": "e01b980d46fbee2e013601464b74c7f02bff811a9e2a7b00c1434e6adf87de39",
+      "nightsky-moments": "207421ebbaf615b056c9abc7842eacee92865dcc20f0c5b751ee478dc6183132",
+      "nightsky-canvas": "0016c321f64e7013cd6cac953c1af6cafb355b955e9d9d0e3b919aef74bb6309",
+      "nightsky-scrubber": "4cf70624b3cf859f9639079c0f429783a2ec4124bc2ecb1f5a7e7f649a868b1c",
+      "nightsky-deck": "c60ee29a0ece255649bb247119559c30adc2bf2c9ece3a9dc2d7957936f8c9a5",
+      "nightsky-player": "50e6826ee6ea814518fac740552514f235eba75ea59f08b1643beffe494f2dca",
+      "nightsky-sky": "3a8e46039590fa63e585fe52a0419e9b5a11d4d61125569830879fbe5cc38824",
+      "nightsky-marks": "323f5d7ecc1892d15042aad5acc5c243e32ea3f2e380cdf46cc63507f415751f",
+      "nightsky-live": "95f568283a2f5daf17d794791ddc023055fb34239957952acbf94612736faf64"
+    },
+    "editorAndGuide": "Changed after fixture build; excluded from listening-runtime equivalence claim"
+  },
+  "observedThroughNativeBrowserUI": {
+    "nameJoin": true,
+    "playFromBothClients": true,
+    "seekFromBothClients": true,
+    "pauseFromBPropagated": true,
+    "orderedPlaybackDataChannel": true,
+    "unorderedCursorChannelMaxRetransmits": 0,
+    "remoteCursorPacketsBothWays": true,
+    "cursorSparkle": true,
+    "clockSamplesEstablished": true,
+    "preparedAnalysisBothClients": true,
+    "peerDisconnectThenFreshBRejoin": true,
+    "browserTabsClosedAfterPause": true
+  },
+  "capturedAssertions": {
+    "clientA": {
+      "passed": 14,
+      "failed": 0
+    },
+    "freshClientB": {
+      "passed": 11,
+      "notRun": 3,
+      "note": "Fresh B inherited paused state; its local seek and prior disconnect checks were not rerun."
+    },
+    "pauseAndRejoin": {
+      "state": "paused",
+      "version": 7,
+      "positionMs": 108934.85009765625,
+      "sameAuthor": true,
+      "activeVoicesEach": 0,
+      "preparedFrames": 11017
+    },
+    "uncaughtErrors": 0
+  },
+  "evidenceFiles": {
+    "client-A-reconnected.json": "0c0860c23439ed427e68dd2e7e7bf87ffa212bff8b97211d73ce01cabea889a7",
+    "client-B-rejoined.json": "d8e2be574ef0aea34915ace01d7bfefeb202f40ca5e812dd04f8f32addf4024a",
+    "pause-convergence.json": "c4abfc2759ddb8c5e3eb6ede95306a450824cb7b292ad315323ed6473288512a"
+  },
+  "provenance": "Root agent operated native CUA UI and captured visible fixture diagnostics; entry_critic checked saved assertions and source hashes. Bidirectional play actions and final tab closure are root UI observations.",
+  "limitations": [
+    "No WAN or deployed Cloudflare-account acceptance",
+    "No physical speaker synchronization or acoustic timing measurement",
+    "No claim that new song configuration was exercised in native Tonk in this local fixture",
+    "Real Durable Object hibernation is covered separately by runtime tests, not this browser leave/rejoin test"
+  ]
+}

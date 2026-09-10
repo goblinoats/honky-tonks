@@ -1,0 +1,14 @@
+# Merge this site into the EXISTING proxy configuration only after inspection.
+# Replace relay.example.com with the owner-approved DNS name.
+relay.example.com {
+    # Query strings carry a room capability. Do not enable raw access logs.
+    log {
+        output discard
+    }
+    # Error/runtime logging also needs sanitization: see the separate global fragment.
+    # Caddy supports WebSocket upgrades automatically; preserve the query token.
+    reverse_proxy 127.0.0.1:8787 {
+        # Let established sockets drain briefly on a proxy config reload.
+        stream_close_delay 5m
+    }
+}

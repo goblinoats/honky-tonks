@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile, cp, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { root, loadCatalog } from './catalog.mjs';
+import { root, loadCatalog, pageCatalog } from './catalog.mjs';
 
 const templates = await loadCatalog();
 const site = JSON.parse(await readFile(path.join(root, 'site.config.json'), 'utf8'));
@@ -28,7 +28,7 @@ for (const t of templates) {
   execFileSync('zip', ['-q', '-X', path.join(target, `${t.slug}.zip`), 'template.yaml', ...t.images.map(i => i.file), ...t.files.map(f => f.file)], { cwd: source });
 }
 await mkdir(path.join(root, 'generated'), { recursive: true });
-await writeFile(path.join(root, 'generated/catalog.json'), JSON.stringify({ basePath, site, templates }, null, 2) + '\n');
+await writeFile(path.join(root, 'generated/catalog.json'), JSON.stringify({ basePath, site, templates: pageCatalog(templates) }, null, 2) + '\n');
 const catalog = {
   schemaVersion: 1,
   name: site.name,
