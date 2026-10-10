@@ -26,7 +26,7 @@ features:
   - Light and dark appearance, and a layout that works at 390px wide
 images:
   - file: preview.png
-    alt: An empty file open in the Tonk Workspace in dark mode, with the folder path and the Start as choices Doc, Spreadsheet, Table and HTML
+    alt: The Tonk Workspace in dark mode, with the folder tree in the sidebar and the space homepage listing planning, meeting and resource files
     caption: Screenshot of Tonk Workspace in a Tonk space.
 files:
   - file: 1-model.yaml
