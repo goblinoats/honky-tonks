@@ -1,0 +1,539 @@
+# Tonk Workspace: a file tree of folders and docs.
+#
+# A node is a folder or a doc. A doc's text lives on the node entity itself,
+# as `xyz.tonk.deck.card/content` = {"markdown": "..."} — the shape the
+# tonknote editor (id:tonknote/app) reads and writes, so the editor is reused
+# unchanged. Sidebar actions are DOM CustomEvents from <file-tree>; each one is
+# a transient command that a rule below turns into durable facts.
+
+concept!: &file/node
+  description: "A folder or doc in the workspace sidebar"
+  with:
+    key:
+      the: xyz.tonk.files.node/key
+      as: text
+      cardinality: one
+      description: "Opaque token other nodes reference this node by"
+    kind:
+      the: xyz.tonk.files.node/kind
+      as: text
+      cardinality: one
+      description: "Node kind: \"folder\" or \"doc\""
+    name:
+      the: xyz.tonk.files.node/name
+      as: text
+      cardinality: one
+      description: "The name shown in the sidebar"
+    order:
+      the: xyz.tonk.files.node/order
+      as: text
+      cardinality: one
+      description: "Lexicographic key ordering the node among its siblings"
+    parent:
+      the: xyz.tonk.files.node/parent
+      as: text
+      cardinality: one
+      description: "The `key` of the parent folder, or the sentinel \"root\" (never blank: a blank field is dropped from a command)"
+
+---
+concept!: &file/node-name
+  description: "A node's name alone (rename rule head)"
+  with:
+    name:
+      the: xyz.tonk.files.node/name
+      as: text
+      cardinality: one
+      description: "The name shown in the sidebar"
+
+---
+concept!: &file/node-place
+  description: "A node's position alone (move rule head)"
+  with:
+    order:
+      the: xyz.tonk.files.node/order
+      as: text
+      cardinality: one
+      description: "Lexicographic key ordering the node among its siblings"
+    parent:
+      the: xyz.tonk.files.node/parent
+      as: text
+      cardinality: one
+      description: "The `key` of the parent folder, or \"root\""
+
+---
+concept!: &file/node-order
+  description: "A node's order alone. Retracting it removes the node from file/node (delete rule head)"
+  with:
+    order:
+      the: xyz.tonk.files.node/order
+      as: text
+      cardinality: one
+      description: "Lexicographic key ordering the node among its siblings"
+
+---
+concept!: &file/doc
+  description: "A doc's text, on the doc's node entity. Written by the tonknote editor"
+  with:
+    content:
+      the: xyz.tonk.deck.card/content
+      as: text
+      cardinality: one
+      description: "The doc as a JSON document: {\"markdown\": \"...\"}"
+
+---
+command!: &file/create-node
+  description: "Create a folder or doc in the sidebar"
+  with:
+    key:
+      the: dom.event.detail/file-node-key
+      as: text
+      cardinality: one
+      description: "Component-minted opaque token for the node"
+    kind:
+      the: dom.event.detail/file-node-kind
+      as: text
+      cardinality: one
+      description: "Node kind: \"folder\" or \"doc\""
+    name:
+      the: dom.event.detail/file-node-name
+      as: text
+      cardinality: one
+      description: "Initial node name"
+    order:
+      the: dom.event.detail/file-node-order
+      as: text
+      cardinality: one
+      description: "Order key among siblings, computed by the component"
+    parent:
+      the: dom.event.detail/file-node-parent
+      as: text
+      cardinality: one
+      description: "The `key` of the parent folder, or \"root\""
+    content:
+      the: dom.event.detail/file-node-content
+      as: text
+      cardinality: one
+      description: "Initial doc content JSON (sent for folders too, so the field is never blank)"
+    time:
+      the: dom.event.detail/time
+      as: unsigned-integer
+      cardinality: one
+      description: "A monotonic integer nonce from the component"
+
+---
+command!: &file/rename-node
+  description: "Rename a folder or doc"
+  with:
+    key:
+      the: dom.event.detail/file-node-target
+      as: text
+      cardinality: one
+      description: "The `key` of the node to rename"
+    name:
+      the: dom.event.detail/file-node-rename
+      as: text
+      cardinality: one
+      description: "The new name"
+
+---
+command!: &file/move-node
+  description: "Move a folder or doc to a new parent and position"
+  with:
+    key:
+      the: dom.event.detail/file-node-move-key
+      as: text
+      cardinality: one
+      description: "The `key` of the node to move"
+    order:
+      the: dom.event.detail/file-node-move-order
+      as: text
+      cardinality: one
+      description: "The node's new order key among its new siblings"
+    parent:
+      the: dom.event.detail/file-node-move-parent
+      as: text
+      cardinality: one
+      description: "The `key` of the destination folder, or \"root\""
+
+---
+command!: &file/delete-node
+  description: "Delete a folder or doc (the sidebar sends one per node in a deleted subtree)"
+  with:
+    key:
+      the: dom.event.detail/file-node-delete
+      as: text
+      cardinality: one
+      description: "The `key` of the node to delete"
+
+---
+# Create: the command's own entity becomes the node.
+rule!:
+  assert!: file/node
+  when:
+    - assert: file/create-node
+      where: { this: ?this, key: ?key, kind: ?kind, name: ?name, order: ?order, parent: ?parent, content: ?content, time: ?time }
+
+---
+# A new doc starts with its initial content on the same entity.
+rule!:
+  assert!: file/doc
+  when:
+    - assert: file/create-node
+      where: { this: ?this, key: ?key, kind: "doc", name: ?name, order: ?order, parent: ?parent, content: ?content, time: ?time }
+
+---
+rule!:
+  assert!: file/node-name
+  when:
+    - assert: file/rename-node
+      where: { key: ?key, name: ?name }
+    - assert: file/node
+      where: { this: ?this, key: ?key, kind: ?kind, name: ?old, order: ?order, parent: ?parent }
+
+---
+rule!:
+  assert!: file/node-place
+  when:
+    - assert: file/move-node
+      where: { key: ?key, order: ?order, parent: ?parent }
+    - assert: file/node
+      where: { this: ?this, key: ?key, kind: ?kind, name: ?name, order: ?oldo, parent: ?oldp }
+
+---
+# Delete: retracting the order drops the node out of file/node.
+rule!:
+  retract!: file/node-order
+  when:
+    - assert: file/delete-node
+      where: { key: ?key }
+    - assert: file/node
+      where: { this: ?this, key: ?key, kind: ?kind, name: ?name, order: ?order, parent: ?parent }
+
+---
+rule!:
+  retract!: file/doc
+  when:
+    - assert: file/delete-node
+      where: { key: ?key }
+    - assert: file/node
+      where: { this: ?this, key: ?key, kind: ?kind, name: ?name, order: ?order, parent: ?parent }
+    - assert: file/doc
+      where: { this: ?this, content: ?content }
+
+---
+# -- File types ---------------------------------------------------------
+# A doc node has a type: "doc" (markdown, the tonknote editor),
+# "spreadsheet" or "table" (the dashboard's grid apps) or "html" (a portal
+# view an agent writes). The type can change only while the file is empty
+# (the doc pane hides the type pills once `file/filled` holds), so a change
+# never discards anything.
+
+concept!: &file/type
+  description: "A doc node's type: doc, spreadsheet, table or html"
+  with:
+    type:
+      the: xyz.tonk.files.node/type
+      as: text
+      cardinality: one
+      description: "doc | spreadsheet | table | html"
+
+---
+concept!: &file/grid
+  description: "The grid document a spreadsheet or table file stores its records under"
+  with:
+    grid:
+      the: xyz.tonk.files.node/grid
+      as: text
+      cardinality: one
+      description: "The grid apps' document key: \"g-\" + hex(UTF-8 of the node entity), or \"none\""
+
+---
+concept!: &file/html
+  description: "An HTML file's page: a portal on the node entity, written by an agent"
+  with:
+    content:
+      the: xyz.tonk.portal/content
+      as: text
+      cardinality: one
+      description: "A complete HTML document, run in a sandboxed frame with window.tonk"
+
+---
+concept!: &file/grid-record
+  description: "One record of a grid app document (cell, row, column, sheet, ...)"
+  with:
+    document:
+      the: xyz.tonk.grid/document
+      as: text
+      cardinality: one
+      description: "The grid document key"
+    key:
+      the: xyz.tonk.grid/key
+      as: text
+      cardinality: one
+      description: "The record key, e.g. cell/<sheet>/<row>/<column>"
+    value:
+      the: xyz.tonk.grid/value
+      as: text
+      cardinality: one
+      description: "The record value, as JSON text"
+
+---
+concept!: &file/filled
+  description: "Derived on query: the file holds content, so its type is fixed"
+  with:
+    filled:
+      the: xyz.tonk.files.node/filled
+      as: text
+      cardinality: one
+      description: "Always \"yes\""
+
+---
+command!: &file/set-type
+  description: "Change an empty file's type"
+  with:
+    key:
+      the: dom.event.detail/file-type-key
+      as: text
+      cardinality: one
+      description: "The `key` of the file"
+    type:
+      the: dom.event.detail/file-type-type
+      as: text
+      cardinality: one
+      description: "doc | spreadsheet | table | html"
+    content:
+      the: dom.event.detail/file-type-content
+      as: text
+      cardinality: one
+      description: "The new type's empty content JSON"
+    grid:
+      the: dom.event.detail/file-type-grid
+      as: text
+      cardinality: one
+      description: "The grid document key for spreadsheet and table, otherwise \"none\""
+
+---
+# A new doc starts as type "doc".
+rule!:
+  assert!: file/type
+  when:
+    - assert: file/create-node
+      where: { this: ?this, key: ?key, kind: "doc", name: ?name, order: ?order, parent: ?parent, content: ?content, time: ?time }
+    - assert: "=="
+      where: { this: ?type, is: "doc" }
+
+---
+rule!:
+  assert!: file/type
+  when:
+    - assert: file/set-type
+      where: { key: ?key, type: ?type, content: ?content, grid: ?grid }
+    - assert: file/node
+      where: { this: ?this, key: ?key, kind: "doc", name: ?name, order: ?order, parent: ?parent }
+
+---
+rule!:
+  assert!: file/doc
+  when:
+    - assert: file/set-type
+      where: { key: ?key, type: ?type, content: ?content, grid: ?grid }
+    - assert: file/node
+      where: { this: ?this, key: ?key, kind: "doc", name: ?name, order: ?order, parent: ?parent }
+
+---
+rule!:
+  assert!: file/grid
+  when:
+    - assert: file/set-type
+      where: { key: ?key, type: ?type, content: ?content, grid: ?grid }
+    - assert: file/node
+      where: { this: ?this, key: ?key, kind: "doc", name: ?name, order: ?order, parent: ?parent }
+
+---
+# Filled: a doc with markdown.
+rule!:
+  assert: file/filled
+  when:
+    - assert: file/type
+      where: { this: ?this, type: "doc" }
+    - assert: file/doc
+      where: { this: ?this, content: ?content }
+    - assert: "=="
+      where: { this: ?filled, is: "yes" }
+  unless:
+    - assert: "=="
+      where: { this: ?content, is: "{\"markdown\":\"\"}" }
+
+---
+# Filled: a spreadsheet or table has a stored flag (file/filled on the node
+# entity), which the doc pane sets when the open grid file gets its first
+# record. No rule derives it: a rule would read every record of every grid,
+# again after each write to the space.
+
+# Filled: an HTML file with a page.
+rule!:
+  assert: file/filled
+  when:
+    - assert: file/type
+      where: { this: ?this, type: "html" }
+    - assert: file/html
+      where: { this: ?this, content: ?content }
+    - assert: "=="
+      where: { this: ?filled, is: "yes" }
+
+---
+# Filled: the space homepage (id:files/home, a fixed HTML file outside the
+# tree) once an agent has written its page.
+rule!:
+  assert: file/filled
+  when:
+    - assert: file/html
+      where: { this: ?this, content: ?content }
+    - assert: "=="
+      where: { this: ?this, is: id:files/home }
+    - assert: "=="
+      where: { this: ?filled, is: "yes" }
+
+---
+# -- Versions -----------------------------------------------------------
+# A commit makes a version: a sub-document of a file. It is an ordinary
+# doc node (kind "doc") whose parent is the file's key, plus a file/version
+# record, with the file's type and a copy of its content at commit time.
+# The sidebar shows a file with versions like a folder. Versions of the
+# homepage use the parent key "home" and appear only in its Versions menu.
+# Rules copy doc and HTML content; for a spreadsheet or table the doc pane
+# copies the grid records itself (one entity per record) after the commit.
+
+concept!: &file/version
+  description: "A version: a snapshot sub-document of a file"
+  with:
+    of:
+      the: xyz.tonk.files.version/of
+      as: text
+      cardinality: one
+      description: "The `key` of the file this is a version of (\"home\" for the homepage)"
+    message:
+      the: xyz.tonk.files.version/message
+      as: text
+      cardinality: one
+      description: "The commit message (a single space when none)"
+    created:
+      the: xyz.tonk.files.version/created
+      as: text
+      cardinality: one
+      description: "Commit time, milliseconds since the Unix epoch, as text"
+    author:
+      the: xyz.tonk.files.version/author
+      as: text
+      cardinality: one
+      description: "The committer's display name"
+
+---
+command!: &file/commit
+  description: "Commit a file: make a version with a copy of its content"
+  with:
+    key:
+      the: dom.event.detail/file-commit-key
+      as: text
+      cardinality: one
+      description: "Component-minted key for the version node"
+    file:
+      the: dom.event.detail/file-commit-file
+      as: text
+      cardinality: one
+      description: "The `key` of the file being committed, or \"home\""
+    name:
+      the: dom.event.detail/file-commit-name
+      as: text
+      cardinality: one
+      description: "The version title"
+    message:
+      the: dom.event.detail/file-commit-message
+      as: text
+      cardinality: one
+      description: "The commit message (a single space when none: blank fields are dropped)"
+    order:
+      the: dom.event.detail/file-commit-order
+      as: text
+      cardinality: one
+      description: "Order key among the file's versions (newest first)"
+    created:
+      the: dom.event.detail/file-commit-created
+      as: text
+      cardinality: one
+      description: "Commit time in ms, as text"
+    author:
+      the: dom.event.detail/file-commit-author
+      as: text
+      cardinality: one
+      description: "The committer's display name"
+
+---
+rule!:
+  assert!: file/node
+  when:
+    - assert: file/commit
+      where: { this: ?this, key: ?key, file: ?parent, name: ?name, message: ?message, order: ?order, created: ?created, author: ?author }
+    - assert: "=="
+      where: { this: ?kind, is: "doc" }
+
+---
+rule!:
+  assert!: file/version
+  when:
+    - assert: file/commit
+      where: { this: ?this, key: ?key, file: ?of, name: ?name, message: ?message, order: ?order, created: ?created, author: ?author }
+
+---
+# The version takes the file's type ...
+rule!:
+  assert!: file/type
+  when:
+    - assert: file/commit
+      where: { this: ?this, key: ?key, file: ?file, name: ?name, message: ?message, order: ?order, created: ?created, author: ?author }
+    - assert: file/node
+      where: { this: ?p, key: ?file, kind: "doc", name: ?pname, order: ?porder, parent: ?pparent }
+    - assert: file/type
+      where: { this: ?p, type: ?type }
+
+---
+rule!:
+  assert!: file/type
+  when:
+    - assert: file/commit
+      where: { this: ?this, key: ?key, file: "home", name: ?name, message: ?message, order: ?order, created: ?created, author: ?author }
+    - assert: "=="
+      where: { this: ?type, is: "html" }
+
+---
+# ... a copy of its doc content (markdown, or a grid's {gridVersion, mode}) ...
+rule!:
+  assert!: file/doc
+  when:
+    - assert: file/commit
+      where: { this: ?this, key: ?key, file: ?file, name: ?name, message: ?message, order: ?order, created: ?created, author: ?author }
+    - assert: file/node
+      where: { this: ?p, key: ?file, kind: "doc", name: ?pname, order: ?porder, parent: ?pparent }
+    - assert: file/doc
+      where: { this: ?p, content: ?content }
+
+---
+# ... and of its HTML page.
+rule!:
+  assert!: file/html
+  when:
+    - assert: file/commit
+      where: { this: ?this, key: ?key, file: ?file, name: ?name, message: ?message, order: ?order, created: ?created, author: ?author }
+    - assert: file/node
+      where: { this: ?p, key: ?file, kind: "doc", name: ?pname, order: ?porder, parent: ?pparent }
+    - assert: file/html
+      where: { this: ?p, content: ?content }
+
+---
+rule!:
+  assert!: file/html
+  when:
+    - assert: file/commit
+      where: { this: ?this, key: ?key, file: "home", name: ?name, message: ?message, order: ?order, created: ?created, author: ?author }
+    - assert: file/html
+      where: { this: id:files/home, content: ?content }
