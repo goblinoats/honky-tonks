@@ -1,0 +1,47 @@
+schemaVersion: 1
+slug: tonk-workspace
+name: Tonk Workspace
+summary: A file workspace for people and agents. Keep Markdown docs, spreadsheets, tables and agent-written HTML pages in a folder tree, open them side by side and commit versions.
+description: |
+  Tonk Workspace is a file workspace built from Tonk facts. A sidebar holds a tree of folders and files, and the open files sit beside it as tiles. Each file has a type: a Markdown doc, a spreadsheet with formulas, a table of records with a calendar view, or an HTML page that an agent writes.
+  Every file has its own address, so a link opens the workspace at that file. Press Command-K (Ctrl-K) to find and open a file. Commit a file to keep a version of it; versions appear under the file in the sidebar.
+  An empty HTML file shows a prompt to copy to an agent. The shared AGENTS.md guide explains the data model, the commands that change the tree and the style rules, so connected agents can create files, edit docs and write pages.
+category: Workspace
+version: 1.0.0
+license: MIT
+author:
+  name: Tonk
+  url: https://tonk.xyz
+  contact: mailto:hello@tonk.xyz
+features:
+  - A sidebar tree of folders and files, with inline rename, drag to move and reorder, and delete confirmation
+  - Markdown docs in the tonknote editor, with click-anywhere-to-type
+  - Spreadsheets with formulas, and record tables with table and calendar views
+  - HTML files that an agent writes, with a copyable agent prompt for empty files
+  - Open files side by side as tiles
+  - An address for every file, and a space homepage outside the tree
+  - Command-K quick open
+  - Versions, committed from a file and shown under it in the sidebar
+  - A shared agent guide that documents the data and the commands
+  - Light and dark appearance, and a layout that works at 390px wide
+images:
+  - file: preview.png
+    alt: An empty file open in the Tonk Workspace in dark mode, with the folder path and the Start as choices Doc, Spreadsheet, Table and HTML
+    caption: Screenshot of Tonk Workspace in a Tonk space.
+files:
+  - file: 1-model.yaml
+    description: Concepts, commands and rules for the file tree, file types, grid records and versions.
+  - file: 2-components.yaml
+    description: The sidebar, the document pane, quick open, the note editor host, the table and spreadsheet app, and the tonknote editor portal.
+  - file: 3-views.yaml
+    description: Views, the file address route and the workspace instance.
+  - file: 4-agents.yaml
+    description: The shared agent guide (AGENTS.md) with the data model, the tree commands and the style rules, set on the space itself.
+entrypoint: files/workspace
+compatibility: Tonk standard library on main as of 2026-10-10.
+notes: |
+  Install into a fresh space, in file order. Make a copy from Discover sets the space home to the workspace. With the CLI, evaluate the files in order and pass --home files/workspace with the last one (tonk eval 4-agents.yaml --home files/workspace). No user data is included: the tree starts empty and the space homepage starts as an empty HTML file. Reinstalling the same files replaces the same entities and keeps existing files.
+  Shared agent guide: 4-agents.yaml sets the space's AGENTS.md claim (the guide that tonk space agents get returns). It finds the space through the standard library's tonk/replica. It replaces any guide the space already has. AGENTS.md in the source folder is the same text.
+  Names: concepts use the file/ and files/ prefixes and attributes the xyz.tonk.files.* namespace. Docs store their text in xyz.tonk.deck.card/content and grids in xyz.tonk.grid/*, the formats the editors share with Tonk Station. The tonknote editor portal is id:tonknote/app, the same entity Tonk Station uses, so installing both templates in one space makes the later one's editor the active one.
+  External services: Mermaid diagrams in docs load from jsDelivr. Everything else is embedded.
+  2-components.yaml is about 1.7 MB because each editor bundles its own code.

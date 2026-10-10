@@ -1,0 +1,103 @@
+# The shared agent guide (AGENTS.md): the file workspace's data model, the
+# commands agents use to change the tree, and the style rules. It is set on
+# the space's own repository subject, found through tonk/replica, so it works
+# in any space. Read it with `tonk space agents get`.
+tonk/replica:
+  this: ?agents-guide-replica
+  subject: ?agents-guide-space
+
+tonk/agents!:
+  this: ?agents-guide-space
+  markdown: |
+    # Tonk Workspace agent guide
+
+    This guide is the space's shared `AGENTS.md` claim. Read it with `tonk space agents get`. A filesystem `AGENTS.md` is a copy; before publishing edits with `tonk space agents set AGENTS.md`, read the current claim and keep unrelated instructions. Do not put credentials, invitation URLs or one-off status notes here.
+
+    ## What the space is
+
+    The home page (`files/workspace`) is a file workspace: a sidebar of folders and files on the left, and the open file on the right. A file has a type: `doc` (markdown, the tonknote editor), `spreadsheet` or `table` (the dashboard's grid apps), or `html` (a page an agent writes). The sidebar and the editors are adapted from the visual-exocortex dashboard (`exocortex-2`).
+
+    Every file has an address: `/space/<space>/open/<file node entity>` (route `files/open-link`). The workspace reads the file from `data-file` on the route view's root; it runs in a sealed frame, so never parse the URL.
+
+    The space homepage is `id:files/home`: a fixed HTML file outside the tree, opened from the space name in the sidebar and whenever no file is open. Its address is the space's own address. Build it like any HTML document (below), with `this: id:files/home`. It starts empty; an agent can write it, for example as a directory of the main files, grouped by section. Keep its links current when files move. Any HTML file can open a file: post `{ type: 'files-open', key: '<node key>', beside: <bool> }` to every ancestor window (the workspace sits several frames up); the workspace opens it in the page's own tile, or in a new tile beside it.
+
+    ## Data
+
+    | Concept | Meaning |
+    | --- | --- |
+    | `file/node` | One folder or doc: `key`, `kind` (`folder` or `doc`), `name`, `parent` (a folder `key` or `"root"`), `order` (lexicographic among siblings). |
+    | `file/doc` | A doc's text, on the doc's own node entity: `content` is JSON text `{"markdown": "..."}` (attribute `xyz.tonk.deck.card/content`). |
+    | `file/type` | A file's type on its node entity: `doc`, `spreadsheet`, `table` or `html`. |
+    | `file/grid` | For spreadsheet and table files: the grid document key, `"g-"` + hex of the UTF-8 node entity. Cells are `file/grid-record` rows (`xyz.tonk.grid/document`, `key`, `value`). |
+    | `file/html` | An HTML file's page: `content` is a complete HTML document (attribute `xyz.tonk.portal/content`), so the node is also a `portal`. |
+    | `file/filled` | Derived on query: the file holds content. A file's type can change only while it is empty. |
+    | `files/workspace` | The page itself; one instance, `id:files/workspace/main`. |
+
+    Read the tree with `tonk query file/node` and doc text with `tonk query file/doc`. Match a doc to its node by entity (`this`), not by name.
+
+    ## Changing the tree
+
+    Sidebar actions are transient commands; rules turn them into facts. Use the same commands from the CLI (save as a file, `tonk eval <file> --dry-run`, then `tonk eval <file>`):
+
+    ```yaml
+    file/create-node!:          # kind "doc" also writes the initial content
+      key: "d-<unique>"
+      kind: "doc"
+      name: "Meeting notes"
+      order: "n"                # pick a key that sorts after its siblings
+      parent: "root"
+      content: "{\"markdown\":\"# Meeting notes\"}"
+      time: 1
+    ```
+
+    `file/rename-node` (`key`, `name`), `file/move-node` (`key`, `parent`, `order`) and `file/delete-node` (`key`) work the same way. Deleting a folder does not delete its children: send one `file/delete-node` per node in the subtree, as the sidebar does. Never send a blank field: a blank field is dropped and the rule does not fire.
+
+    To edit a doc's text, assert `file/doc` on the doc's node entity with the full new JSON content. The editor detects a remote change and asks the user if they have unsaved edits.
+
+    Change an empty file's type with `file/set-type` (`key`, `type`, `content`, `grid`); the doc pane's pills send it. Do not change the type of a filled file.
+
+    ## Tables
+
+    A table file's grid records follow the table app's format, one sheet `first`: `sheet/first` (`{id, name, order}`), `column/first/<id>` (`{id, order, title, type, width, options}`; types: text, number, date, datetime, checkbox, select, multiselect, status, person, url, email), `row/first/<id>` (`{id, order}`) and `cell/first/<row>/<column>` (`{raw}`: checkbox `TRUE`/`FALSE`, date `YYYY-MM-DD`, multiselect a JSON array). Each record's entity is `id:grid/<grid key>/<URI-encoded record key>`, and the assertion is `file/grid-record!:`. The app has only table and calendar views.
+
+    ## Versions
+
+    A commit makes a version: a sub-document of a file. It is an ordinary doc node whose `parent` is the file's `key` (or `"home"` for the homepage), plus a `file/version` record (`of`, `message`, `created`, `author`), with the file's type and a copy of its content. The sidebar shows a file with versions like a folder. Commit from the CLI with `file/commit` (`key`, `file`, `name`, `message` — a single space when none — `order`, `created`, `author`); the rules copy doc and HTML content. For a spreadsheet or table, also copy the grid records to the version's grid key (`"g-"` + hex of the version node entity) and send `file/set-type` for the version, as the doc pane does. Never edit a version to change history; commit a new one.
+
+    ## HTML documents
+
+    An empty HTML file shows a "Copy prompt" button. The prompt names the file's entity. Build the page as one self-contained HTML document and write it with:
+
+    ```yaml
+    xyz.tonk.portal!:
+      this: <the file's node entity>
+      content: |
+        <!doctype html>
+        ...
+    ```
+
+    The page runs in a sandboxed frame with `window.tonk` for the space's data, like the tonknote and grid apps. Follow the style section: copy the `--dk-*` values into the frame's own `:root`, with dark values under `prefers-color-scheme: dark`.
+
+    ## Source
+
+    The workspace is the Tonk Workspace template, installed in file order:
+
+    - `1-model.yaml`: concepts, commands and rules.
+    - `2-components.yaml`: the page components (`file-tree`, `doc-pane`, `quick-open`, `hscroll`, the note editor host and the table and spreadsheet app) and the `id:tonknote/app` editor portal.
+    - `3-views.yaml`: the views, the file address route and the workspace instance.
+    - `4-agents.yaml`: this guide.
+
+    Reinstall with `tonk eval` on each file in order, with `--home files/workspace` on the last one. A reinstall replaces the same entities and keeps the files.
+
+    ## Style
+
+    The look is "Quiet ink". Use the `--dk-*` tokens defined in the workspace view's stylesheet; never hard-code their values.
+
+    - Neutral and black-first: canvas `#f6f6f5`, cards `#ffffff`, hairlines `#ebebea` (`#d4d4d1` stronger), ink `#111111` / `#6b6b6b` / `#a3a3a3`. Dark mode has its own values under `.wa-dark`.
+    - Primary actions are ink (`--dk-primary`), one per view. No blue.
+    - One accent, sand `#cfa784` (`--dk-accent`), for the selected-row bar and soft fills only; it is too light for text or rings. Keyboard focus uses the darker `#a27752` (`--dk-accent-line`).
+    - No glass, blur or gradients. Only floating layers (menus, dialogs, the Cmd-K window) get a shadow.
+    - The sidebar has no surface or edge of its own. Tiles are hairline cards (12px radius) on the canvas, also when only one is open.
+    - Type: the system UI font for names and text; monospace (`--dk-mono`) for paths, dates, authors, counts, IDs and keyboard hints. Section labels are monospace in sentence case ("Versions", "Start as"). The file tree has no label above it. Never use capitals, small caps or tracked uppercase for labels.
+    - Controls: 28px outlined icon buttons, a segmented control for the file type, line icons in `currentColor`.
+    - Everything must work in light and dark mode and at 390px wide.

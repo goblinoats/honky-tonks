@@ -1,0 +1,1138 @@
+# Tonk Workspace views. Generated from the workspace source; edit the source, not this file.
+
+# Components: every module loads once, from a hidden directory listing.
+view!:
+  this: component
+  show:
+    directory: |
+      <div class="component-loader" hidden>
+        <tonk-component subject={this} module={module}></tonk-component>
+      </div>
+    ui: |
+      <tonk-component module={module} />
+
+---
+# Portals: sandboxed frame apps such as the tonknote editor.
+view!:
+  this: portal
+  show:
+    ui: |
+      <tonk-portal html:content={content} />
+
+---
+# The signed-in member as a hidden row; the doc editor stamps it on comments.
+view!:
+  this: tonk:identity
+  show:
+    selfrow: |
+      <div class="deck-self-row" data-did={did} data-name={name}></div>
+
+---
+# The space's name as a hidden row; it heads the sidebar.
+view!:
+  this: tonk/repository
+  show:
+    spacerow: |
+      <div class="space-name-row" data-name={name} data-repo={this}></div>
+
+---
+# This browser session's agent invitation links, as hidden rows; an empty
+# HTML document puts the newest one in its agent prompt.
+view!:
+  this: tonk/agent-invite
+  show:
+    inviterow: |
+      <div class="agent-invite-row" data-link={link}></div>
+
+---
+# File types and the derived "filled" flag, as hidden rows beside the nodes.
+view!:
+  this: file/type
+  show:
+    directory: |
+      <div class="file-type-rows">
+        <div class="file-type-row" subject={this} data-node={this} data-type={type}></div>
+      </div>
+
+---
+view!:
+  this: file/version
+  show:
+    directory: |
+      <div class="file-version-rows">
+        <div class="file-version-row" subject={this} data-node={this} data-of={of} data-message={message} data-created={created} data-author={author}></div>
+      </div>
+
+---
+view!:
+  this: file/filled
+  show:
+    directory: |
+      <div class="file-filled-rows">
+        <div class="file-filled-row" subject={this} data-node={this}></div>
+      </div>
+
+---
+# File nodes as hidden data rows; <file-tree> and <doc-pane> read them.
+view!:
+  this: file/node
+  show:
+    directory: |
+      <div class="file-node-rows">
+        <div class="file-node-row" subject={this} data-node={this} data-key={key} data-kind={kind} data-name={name} data-parent={parent} data-order={order}></div>
+      </div>
+
+---
+# File addresses: /space/<space>/open/<file entity> renders the workspace
+# with the file named in data-file. The worker stamps the path span into
+# `entity` (the param must be named `entity`); `branch`, `repo` and
+# `replica` must be picked off the site too, or the route renders blank.
+concept!: &files/open-link
+  description: "A file address: the workspace opened at one file"
+  with:
+    entity:
+      the: xyz.tonk.site/entity
+      as: entity
+      cardinality: one
+      description: "The file node to open, captured from the path"
+    branch:
+      the: xyz.tonk.site/branch
+      as: text
+      cardinality: one
+      description: "The space branch, picked off the site"
+    repo:
+      the: xyz.tonk.site/repo
+      as: text
+      cardinality: one
+      description: "The space repository, picked off the site"
+    replica:
+      the: xyz.tonk.site/replica
+      as: entity
+      cardinality: one
+      description: "The active replica, picked off the site"
+
+---
+route!:
+  this: id:files/route/open
+  concept: files/open-link
+  path: "/open/{*entity}"
+
+---
+# A definite height: the route frame is viewport-tall and does not scroll.
+view!:
+  this: files/open-link
+  show:
+    ui: |
+      <div class="files-link" data-file={entity} style="height:100dvh">
+        <tonk-display model=files/workspace></tonk-display>
+      </div>
+
+---
+concept!: &files/workspace
+  description: "The workspace page: the file sidebar beside the open doc"
+  with:
+    name:
+      the: xyz.tonk.files.workspace/name
+      as: text
+      cardinality: one
+      description: "The workspace name: the space's own name, as the Tonk menu shows it"
+
+---
+# The one workspace instance, derived on query: its name is the space's
+# repository name (tonk/repository, which every space has from creation), so
+# it follows a rename from the Tonk menu.
+rule!:
+  assert: files/workspace
+  when:
+    - assert: tonk/repository
+      where: { name: ?name }
+    - assert: "=="
+      where: { this: ?this, is: id:files/workspace/main }
+
+---
+view!:
+  this: files/workspace
+  show:
+    directory: |
+      <tonk-display model=files/workspace entity={this} view=ui />
+    ui: |
+      <div class="deck-root files-root">
+        <style>
+      /* Workspace styles. The structure (sidebar, dialogs, phone layout) comes
+         from the dashboard's deck view (tonk:deck/canvas in exocortex-2); the
+         look is "Quiet ink" (tokens below, component rules near the end; see the
+         Figma mock-up linked in AGENTS.md). */
+          :root:has(.deck-root), .deck-root {
+            --dk-gap: 12px;
+            --dk-vgap: 12px;
+            --dk-top: 0px; /* the space bar is gone; the explorer sits beside the strip, not above it */
+            --dk-ease: cubic-bezier(0.32, 0.72, 0, 1);
+            --dk-spring: cubic-bezier(0.2, 0.9, 0.25, 1.15);
+            --dk-radius: 10px;
+            --dk-radius-lg: 12px;
+            --dk-font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+            --dk-mono: 'SF Mono', ui-monospace, 'Geist Mono', 'JetBrains Mono', Menlo, monospace;
+
+            /* Quiet ink: neutral and black-first. Hairlines and type carry the
+               structure; one sand accent marks selection; no glass or blur.
+               Primary actions are ink (near-black), not accent. */
+            --dk-bg: #f6f6f5;
+            --dk-ink: #111111;
+            --dk-ink-2: #6b6b6b;
+            --dk-ink-3: #a3a3a3;
+            --dk-card: #ffffff;
+            --dk-raised: #ffffff;
+            --dk-soft: #f3f3f2;
+            --dk-glass: #ffffff;
+            --dk-glass-strong: #ffffff;
+            --dk-glass-blur: none;
+            --dk-line: #ebebea;
+            --dk-line-strong: #d4d4d1;
+            --dk-line-active: #c9c9c5;   /* the active tile's outline */
+            --dk-hover: rgba(0, 0, 0, 0.035);
+            --dk-press: rgba(0, 0, 0, 0.06);
+            --dk-highlight: rgba(255, 255, 255, 0);
+            /* Sand: the selection bar and soft fills (2.2:1 on white: decoration only). */
+            --dk-accent: #cfa784;
+            --dk-accent-soft: rgba(207, 167, 132, 0.2);
+            /* A darker sand for keyboard focus rings (4:1 on white). */
+            --dk-accent-line: #a27752;
+            --dk-accent-ink: #ffffff;
+            --dk-primary: #111111;
+            --dk-primary-ink: #ffffff;
+            --dk-select: #ececea;
+            --dk-danger: #c4352b;
+            --dk-mark: rgba(207, 167, 132, 0.28);
+            --dk-mark-line: rgba(162, 119, 82, 0.6);
+            --dk-scrim: rgba(17, 17, 17, 0.12);
+            --dk-shadow-card: none;
+            --dk-shadow-pop: 0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.08);
+            --dk-backdrop: none;
+            color-scheme: light;
+
+            /* Legacy names other components read. */
+            --dk-paper: var(--dk-card);
+            --dk-line-soft: var(--dk-line);
+            --dk-sel: var(--dk-accent);
+          }
+          .deck-root {
+            --wa-color-text-normal: var(--dk-ink);
+            --wa-color-text-quiet: var(--dk-ink-2);
+            --wa-color-surface-default: var(--dk-card);
+            --wa-color-surface-raised: var(--dk-raised);
+            --wa-color-surface-lowered: var(--dk-bg);
+            --wa-color-surface-border: var(--dk-line);
+            --wa-color-neutral-fill-quiet: var(--dk-hover);
+            --wa-color-brand-fill-loud: var(--dk-accent);
+            --wa-color-focus: var(--dk-accent);
+            --wa-font-family-body: var(--dk-font);
+            --wa-font-family-heading: var(--dk-font);
+            --wa-font-family-code: var(--dk-mono);
+            --wa-shadow-s: var(--dk-shadow-card);
+            --wa-shadow-l: var(--dk-shadow-pop);
+
+            display: flex;
+            flex-direction: row;
+            /* Pinned to the viewport: a host offset or body margin above
+               a 100dvh flow box overflows the page by exactly that much
+               and scroll-clips the pill bar. Fixed positioning cannot be
+               clipped, and the viewport units below agree with this box. */
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            font-family: var(--dk-font);
+            font-size: 13px;
+            line-height: 1.55;
+            letter-spacing: -0.003em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            color: var(--dk-ink);
+            background: var(--dk-backdrop);
+            background-color: var(--dk-bg);
+            accent-color: var(--dk-accent);
+          }
+          /* Dark appearance follows the OS through the host's `.wa-dark` class:
+             a near-black canvas with cards a step lighter, as in Linear.
+             color-scheme carries the choice into embedded frames (editors). */
+          .wa-dark:has(.deck-root), .wa-dark .deck-root {
+            --dk-bg: #0b0b0c;
+            --dk-ink: #f2f2f2;
+            --dk-ink-2: #9a9a9a;
+            --dk-ink-3: #5c5c5c;
+            --dk-card: #141416;
+            --dk-raised: #1c1c1f;
+            --dk-soft: #1a1a1d;
+            --dk-glass: #141416;
+            --dk-glass-strong: #1c1c1f;
+            --dk-line: #232326;
+            --dk-line-strong: #34343a;
+            --dk-line-active: #404047;
+            --dk-hover: rgba(255, 255, 255, 0.05);
+            --dk-press: rgba(255, 255, 255, 0.08);
+            --dk-accent: #cfa784;
+            --dk-accent-soft: rgba(207, 167, 132, 0.18);
+            --dk-accent-line: #cfa784;
+            --dk-primary: #f2f2f2;
+            --dk-primary-ink: #111111;
+            --dk-select: rgba(255, 255, 255, 0.07);
+            --dk-danger: #ff6b5f;
+            --dk-mark: rgba(207, 167, 132, 0.2);
+            --dk-mark-line: rgba(207, 167, 132, 0.5);
+            --dk-scrim: rgba(0, 0, 0, 0.45);
+            --dk-shadow-card: none;
+            --dk-shadow-pop: 0 0 0 0.5px rgba(255, 255, 255, 0.06), 0 12px 32px rgba(0, 0, 0, 0.5);
+            color-scheme: dark;
+          }
+          .deck-root ::selection { background: var(--dk-accent-soft); }
+          /* The tree and canvas are keyboard surfaces with their own selection
+             (active row, focused card), so they draw no outline themselves. */
+          .deck-root :focus-visible:where(:not(file-tree, doc-pane, doc-tile)) { outline: 2px solid var(--dk-accent-line); outline-offset: 1px; }
+          /* Text fields carry their own focus cue (caret, underline or ring). */
+          .deck-root input:focus-visible, .deck-root textarea:focus-visible, .deck-root select:focus-visible { outline: none; }
+          .deck-data { display: none; }
+
+          .dk-bar-flex { flex: 1; }
+          .deck-root .dk-icon, .deck-root button svg { display: block; flex: none; }
+          .deck-root kbd {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 18px; height: 18px; box-sizing: border-box;
+            padding: 0 5px;
+            border: 0.5px solid var(--dk-line-strong);
+            border-radius: 5px;
+            background: var(--dk-hover);
+            box-shadow: inset 0 -1px 0 var(--dk-line);
+            color: var(--dk-ink-2);
+            font-family: var(--dk-font);
+            font-size: 10.5px; font-weight: 500; line-height: 1; white-space: nowrap;
+          }
+          /* -- explorer (file-tree) ------------------------------------
+             A flush, translucent source list down the left edge, like Notes. */
+          file-tree {
+            /* The open width. The canvas sizes its columns as if the sidebar
+               were open, so hiding or showing it never resizes the cards. */
+            --dk-tree-w: 264px;
+            flex: none;
+            width: var(--dk-tree-w);
+            min-width: 0;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-right: 0.5px solid var(--dk-line-strong);
+            background: var(--dk-glass);
+            -webkit-backdrop-filter: var(--dk-glass-blur);
+            backdrop-filter: var(--dk-glass-blur);
+            outline: none;
+            overflow: hidden;
+            transition: width 240ms var(--dk-ease);
+          }
+          file-tree.is-collapsed { width: 40px; }
+          file-tree.is-collapsed .dt-head, file-tree.is-collapsed .dt-list { display: none; }
+          .dt-rail { display: none; }
+          file-tree.is-collapsed .dt-rail {
+            display: flex; align-items: flex-start; justify-content: center;
+            flex: 1; width: 100%; padding: 12px 0 0;
+            border: none; background: transparent;
+            color: var(--dk-ink-2);
+            font: inherit; cursor: pointer;
+            transition: color 120ms ease, background 120ms ease;
+          }
+          file-tree.is-collapsed .dt-rail:hover { color: var(--dk-ink); background: var(--dk-hover); }
+          /* Grows to fit a space name that wraps to two lines. */
+          .dt-head {
+            flex: none; min-height: 52px; box-sizing: border-box;
+            display: flex; align-items: center; gap: 2px;
+            padding: 6px 8px 6px 16px;
+          }
+          /* The space's name heads the sidebar, as an account name heads Mail's.
+             It is a button: it opens the space homepage. */
+          .dt-title {
+            flex: 1 1 auto; min-width: 0; margin: 0 4px 0 -6px; padding: 4px 6px;
+            display: flex; align-items: center;
+            border: 0; border-radius: 6px; background: transparent; text-align: left; cursor: pointer;
+            font: inherit; font-size: 13px; font-weight: 600; letter-spacing: -0.003em; line-height: 1.3;
+            color: var(--dk-ink);
+            transition: background 120ms ease;
+          }
+          /* A long name wraps to two lines, then ends with an ellipsis. The clamp
+             sits on an inner span: a <button> does not honour -webkit-box. */
+          .dt-title-text {
+            min-width: 0;
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+            overflow: hidden; white-space: normal; overflow-wrap: anywhere;
+          }
+          /* The space name is a plain button to the homepage: a hairline outline
+             (inset, so the size does not change), a darker press-level hover and
+             no selected state. */
+          .dt-title { box-shadow: inset 0 0 0 1px var(--dk-line-strong); transition: background 120ms ease, box-shadow 120ms ease; }
+          .dt-title:hover { background: var(--dk-press); }
+          .dt-title:active { background: var(--dk-press); box-shadow: inset 0 0 0 1px var(--dk-line-active); }
+          .dt-btn {
+            flex: none; width: 26px; height: 26px; padding: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            font: inherit; line-height: 1;
+            border-radius: 7px; border: none;
+            background: transparent;
+            color: var(--dk-ink-3);
+            cursor: pointer; box-sizing: border-box;
+            transition: color 120ms ease, background 120ms ease;
+          }
+          .dt-btn svg, .dt-rail svg { display: block; }
+          .dt-btn:hover { color: var(--dk-ink); background: var(--dk-hover); }
+          .dt-btn:active { background: var(--dk-press); }
+          .dt-hide { margin-left: 2px; }
+          .dt-list { flex: 1; min-height: 0; overflow: auto; padding: 2px 8px 10px; scrollbar-width: none; }
+          .dt-row {
+            display: flex; align-items: center; gap: 8px;
+            height: 30px; margin: 1px 0;
+            padding: 0 8px 0 calc(10px + var(--dt-depth, 0) * 14px);
+            border-radius: 8px;
+            font-size: 13px; color: var(--dk-ink-2);
+            cursor: pointer; white-space: nowrap; user-select: none;
+            transition: background 120ms ease, color 120ms ease;
+          }
+          .dt-row:hover { background: var(--dk-hover); color: var(--dk-ink); }
+          /* Chrome shows selection with a fill, never a border. */
+          .dt-row.is-sel { background: var(--dk-hover); }
+          .dt-row.is-active, .dt-row.is-active:hover {
+            background: var(--dk-select);
+            color: var(--dk-ink);
+            font-weight: 600;
+          }
+          .dt-row.is-active .dt-glyph { opacity: 1; }
+          .dt-row.is-pending, .dt-row.is-ghost { opacity: 0.6; }
+          .dt-folder { color: var(--dk-ink-3); }
+          .dt-folder .dt-name { font-weight: 600; font-size: 12px; }
+          .dt-glyph { flex: none; width: 12px; height: 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--dk-ink-3); }
+          .dt-glyph svg { display: block; transition: transform 160ms var(--dk-ease); }
+          .dt-folder[aria-expanded="true"] .dt-glyph svg { transform: rotate(90deg); }
+          /* A file with versions: its own chevron, then its type icon. */
+          .dt-twist { cursor: pointer; border-radius: 4px; }
+          .dt-twist:hover { color: var(--dk-ink); background: var(--dk-press); }
+          .dt-doc[aria-expanded="true"] .dt-twist svg { transform: rotate(90deg); }
+          .dt-doc:has(.dt-twist) { padding-left: max(2px, calc(var(--dt-depth, 0) * 14px - 10px)); }
+          .dt-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+          /* Inline rename, as in Finder: the name becomes editable in place.
+             No border or ring; the caret and the text selection are the cue. */
+          .dt-input {
+            flex: 1; min-width: 0; height: 22px; margin: 0; padding: 0;
+            font: inherit; font-size: 13px; color: var(--dk-ink);
+            background: transparent; border: 0; border-radius: 0;
+            box-shadow: none; outline: none;
+          }
+          .dt-folder .dt-input { font-weight: 600; font-size: 12px; }
+          .dt-x {
+            flex: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            color: var(--dk-ink-2); border-radius: 5px;
+            opacity: 0; transition: opacity 120ms ease, background 120ms ease;
+          }
+          .dt-row:hover .dt-x { opacity: 0.55; }
+          .dt-x:hover { opacity: 1; background: var(--dk-press); }
+          .dt-empty { padding: 10px 12px; font-size: 12px; color: var(--dk-ink-3); }
+          /* -- shared: overlays, glass sheets, buttons -------------------- */
+          .dk-confirm {
+            position: fixed; inset: 0;
+            display: flex; justify-content: center;
+            background: var(--dk-scrim);
+            -webkit-backdrop-filter: blur(2px);
+            backdrop-filter: blur(2px);
+            animation: dk-fade 160ms ease;
+          }
+          .dk-confirm-card {
+            background: var(--dk-glass-strong);
+            -webkit-backdrop-filter: var(--dk-glass-blur);
+            backdrop-filter: var(--dk-glass-blur);
+            border: 0.5px solid var(--dk-line-strong);
+            border-radius: var(--dk-radius-lg);
+            box-shadow: inset 0 1px 0 var(--dk-highlight), var(--dk-shadow-pop);
+            animation: dk-pop 220ms var(--dk-spring);
+          }
+          @keyframes dk-fade { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes dk-pop {
+            from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+            to { opacity: 1; transform: none; }
+          }
+          .dk-confirm-cancel, .dk-confirm-del, .dp-new {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+            height: 30px; padding: 0 12px; box-sizing: border-box;
+            color: var(--dk-ink);
+            background: var(--dk-card);
+            border: 0.5px solid var(--dk-line-strong);
+            border-radius: 7px;
+            box-shadow: 0 0.5px 1.5px rgba(0, 0, 0, 0.08);
+            transition: background 120ms ease, border-color 120ms ease, filter 120ms ease, transform 120ms ease;
+          }
+          .dk-confirm-cancel:hover { background: var(--dk-press); }
+          .dk-confirm-cancel:active, .dk-confirm-del:active, .dp-new:active { transform: scale(0.98); }
+          .dp-new {
+            color: var(--dk-accent-ink);
+            background: var(--dk-accent);
+            border-color: transparent;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+          }
+          .dp-new:hover { filter: brightness(1.08); }
+          .dk-confirm-del {
+            color: #fff; background: var(--dk-danger); border-color: transparent;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+          }
+          .dk-confirm-del:hover { filter: brightness(1.08); }
+          .dk-confirm-title {
+            font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: none;
+            color: var(--dk-ink-3);
+          }
+          /* -- confirm (delete file / folder) ------------------------------ */
+          .dk-confirm { z-index: 50; align-items: center; }
+          .dk-confirm[hidden] { display: none; }
+          /* The sidebar's confirm is a modal <dialog> in the top layer. */
+          dialog.dk-confirm { width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; color: inherit; font: inherit; }
+          dialog.dk-confirm:not([open]) { display: none; }
+          dialog.dk-confirm::backdrop { background: transparent; }
+          .deck-root dialog.dk-confirm:focus-visible { outline: none; }
+          .dk-confirm-card {
+            width: 380px; max-width: 90%;
+            padding: 20px 20px 16px;
+            display: flex; flex-direction: column; gap: 10px;
+          }
+          .dk-confirm-title::first-letter { text-transform: uppercase; }
+          .dk-confirm-body { margin: 0; font-size: 14px; line-height: 1.5; color: var(--dk-ink); }
+          .dk-confirm-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+
+          /* -- doc pane ----------------------------------------------------
+             The open file fills the window beside the sidebar, on one card
+             surface, like a note in Notes. */
+          doc-tile {
+            flex: 1; min-width: 0; min-height: 0;
+            display: flex; flex-direction: column;
+            /* The bar adapts to the tile's own width, not the window's. */
+            container: tile / inline-size;
+            background: var(--dk-card);
+            outline: none;
+          }
+          /* The pane lays out its tiles. One tile fills it edge to edge; two or
+             more become cards side by side on the window background, like the
+             dashboard's strip, scrolling sideways when they no longer fit. */
+          doc-pane { flex: 1; min-width: 0; min-height: 0; display: flex; position: relative; }
+          .dp-strip { flex: 1; min-width: 0; display: flex; align-items: stretch; }
+          doc-pane.is-multi .dp-strip {
+            /* The last tile's grip is the strip's right margin. */
+            gap: 0; padding: 12px 0 14px 14px; box-sizing: border-box;
+            overflow-x: auto; overflow-y: hidden; background: var(--dk-bg);
+            scrollbar-width: thin; scrollbar-color: var(--dk-line-strong) transparent;
+          }
+          doc-pane.is-multi doc-tile {
+            flex: 1 0 0; min-width: 420px;
+            transition: flex-basis 280ms var(--dk-ease);
+            border: 0.5px solid var(--dk-line); border-radius: var(--dk-radius-lg);
+            box-shadow: var(--dk-shadow-card); overflow: hidden;
+            animation: dk-in 240ms var(--dk-ease);
+            transition: border-color 160ms ease, box-shadow 200ms ease;
+          }
+          /* A resized tile keeps its share of the strip. */
+          doc-pane.is-multi doc-tile[data-width] { flex: 0 0 calc(var(--dp-w) * 100%); min-width: 280px; }
+          doc-pane.is-multi doc-tile.is-resizing { transition: none; }
+          /* The grip is the gap after each tile (the dashboard's column grip). */
+          .dp-grip { display: none; }
+          doc-pane.is-multi .dp-grip {
+            flex: none; width: var(--dk-gap); position: relative;
+            display: flex; align-items: center; justify-content: center;
+            cursor: col-resize; touch-action: none;
+          }
+          doc-pane.is-multi .dp-grip::after {
+            content: ''; width: 4px; height: 36px; border-radius: 2px;
+            background: var(--dk-line-strong); opacity: 0;
+            transition: opacity 140ms ease, background 140ms ease, height 200ms var(--dk-ease);
+          }
+          doc-pane.is-multi .dp-grip:hover::after, doc-pane.is-multi .dp-grip.is-resizing::after {
+            opacity: 1; height: 64px; background: var(--dk-accent);
+          }
+          doc-pane.is-multi doc-tile:hover + .dp-grip::after { opacity: 1; }
+          .dp-grip-pct {
+            position: absolute; top: 50%; right: 18px; transform: translateY(-50%); z-index: 3;
+            font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--dk-ink);
+            background: var(--dk-glass-strong); -webkit-backdrop-filter: var(--dk-glass-blur); backdrop-filter: var(--dk-glass-blur);
+            border: 0.5px solid var(--dk-line-strong); border-radius: 7px; box-shadow: var(--dk-shadow-card);
+            padding: 3px 7px; pointer-events: none; white-space: nowrap;
+          }
+          .dp-grip-pct[hidden] { display: none; }
+          /* The active tile (where a sidebar click lands): a thin blue ring. */
+          doc-pane.is-multi doc-tile.is-active {
+            border-color: var(--dk-accent-line);
+            box-shadow: 0 0 0 2.5px var(--dk-accent-soft), var(--dk-shadow-card);
+          }
+          @keyframes dk-in {
+            from { opacity: 0; transform: translateY(6px) scale(0.985); }
+            to { opacity: 1; transform: none; }
+          }
+          /* Tile tools: pop out beside, and close (only with two or more tiles). */
+          .dp-end { gap: 2px; }
+          .dp-tool {
+            flex: none; width: 28px; height: 28px; padding: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 0; border-radius: 7px; background: transparent;
+            color: var(--dk-ink-3); cursor: pointer;
+            transition: background 120ms ease, color 120ms ease;
+          }
+          .dp-tool:hover { color: var(--dk-ink); background: var(--dk-hover); }
+          doc-pane:not(.is-multi) .dp-close { display: none; }
+          /* 52px: the 30px pills get 11px above and below, and the bar keeps
+             that height whatever sits in its centre. */
+          .dp-head {
+            flex: none; min-height: 52px; box-sizing: border-box;
+            display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: center; gap: 12px;
+            padding: 0 16px 0 20px;
+            border-bottom: 0.5px solid var(--dk-line);
+            font-size: 13px; white-space: nowrap;
+          }
+          .dp-name { grid-column: 1; min-width: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; }
+          .dp-end { grid-column: 3; justify-self: end; display: flex; align-items: center; }
+          doc-tile.is-empty .dp-head { border-bottom-color: transparent; }
+          .dp-path { flex: none; max-width: 50%; overflow: hidden; text-overflow: ellipsis; color: var(--dk-ink-3); }
+          .dp-path:empty { display: none; }
+          .dp-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: var(--dk-ink); }
+          .dp-body { flex: 1; min-height: 0; position: relative; }
+          doc-tile note-card.dp-note { position: absolute; inset: 0; height: auto; }
+          doc-tile note-card.dp-note[hidden] { display: none; }
+          .dp-empty {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+            padding: 24px; text-align: center;
+            color: var(--dk-ink-2);
+          }
+          .dp-empty[hidden] { display: none; }
+          .dp-empty-icon { color: var(--dk-ink-3); }
+          .dp-empty p { margin: 0; font-size: 13px; }
+
+          /* Type pills: solid, button-like chips with an icon, as in Notion's
+             "Get started with" row. The current type is raised white, like the
+             selected segment of a segmented control. Shown only while the file
+             is empty. */
+          .dp-types { grid-column: 2; display: inline-flex; align-items: center; gap: 6px; }
+          /* Set like the file name at the left (13px, its line height, centred in
+             the bar), with room before the pills so it reads as a label. */
+          .dp-types-label { margin-right: 12px; font-size: 13px; line-height: 1.55; color: var(--dk-ink-3); }
+          .dp-types[hidden] { display: none; }
+          .dp-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 30px; padding: 0 12px 0 10px; box-sizing: border-box;
+            border: 0; border-radius: 15px;
+            background: color-mix(in oklab, var(--dk-ink) 7%, transparent);
+            color: var(--dk-ink);
+            font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer;
+            transition: background 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+          }
+          .dp-pill svg { flex: none; color: var(--dk-ink-2); }
+          .dp-pill:hover { background: color-mix(in oklab, var(--dk-ink) 11%, transparent); }
+          .dp-pill:active { transform: none; }
+          .dp-pill.is-on {
+            background: var(--dk-raised);
+            box-shadow: 0 0 0 0.5px var(--dk-line-strong), 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: default;
+          }
+          .dp-pill.is-on svg { color: var(--dk-accent); }
+          .wa-dark .dp-pill.is-on { background: color-mix(in oklab, var(--dk-ink) 16%, transparent); box-shadow: 0 0 0 0.5px var(--dk-line-strong); }
+          .dp-link {
+            flex: none; width: 28px; height: 28px; padding: 0;
+            display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+            border: 0; border-radius: 7px; background: transparent;
+            color: var(--dk-ink-3); font: inherit; font-size: 12px; cursor: pointer;
+            transition: background 120ms ease, color 120ms ease;
+          }
+          .dp-link[hidden] { display: none; }
+          .dp-link:hover { color: var(--dk-ink); background: var(--dk-hover); }
+          .dp-link:has(span) { width: auto; padding: 0 8px; color: var(--dk-ink-2); }
+          /* -- versions ---------------------------------------------------
+             The Versions button takes the pills' place once a file has content. */
+          .dp-versions { grid-column: 2; display: inline-flex; }
+          .dp-versions[hidden], .dp-version-of[hidden] { display: none; }
+          .dp-versions-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 30px; padding: 0 10px 0 10px; box-sizing: border-box;
+            border: 0; border-radius: 15px;
+            background: color-mix(in oklab, var(--dk-ink) 7%, transparent);
+            color: var(--dk-ink); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: background 120ms ease;
+          }
+          .dp-versions-btn svg { flex: none; color: var(--dk-ink-2); }
+          .dp-versions-btn:hover, .dp-versions-btn[aria-expanded="true"] { background: color-mix(in oklab, var(--dk-ink) 11%, transparent); }
+          .dp-count:empty { display: none; }
+          .dp-count { min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: var(--dk-raised); color: var(--dk-ink-2); font-size: 11px; line-height: 18px; text-align: center; }
+          .dp-version-of {
+            grid-column: 2; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+            height: 28px; padding: 0 10px; border: 0; border-radius: 14px; background: transparent;
+            color: var(--dk-ink-2); font: inherit; font-size: 12px; cursor: pointer;
+          }
+          .dp-version-of:hover { background: var(--dk-hover); color: var(--dk-ink); }
+          doc-tile { position: relative; }
+          /* The menu drops from the centre of the bar, like a popover. */
+          .dp-menu {
+            /* Centred with `translate`, not `transform`: the dk-pop animation
+               sets transform, which would undo the centring while it runs. */
+            position: absolute; top: 56px; left: 50%; z-index: 30; translate: -50% 0;
+            width: min(380px, calc(100% - 32px)); max-height: min(70vh, 520px);
+            display: flex; flex-direction: column;
+            background: var(--dk-glass-strong);
+            -webkit-backdrop-filter: var(--dk-glass-blur); backdrop-filter: var(--dk-glass-blur);
+            border: 0.5px solid var(--dk-line-strong); border-radius: 14px; box-shadow: var(--dk-shadow-pop);
+            animation: dk-pop 180ms var(--dk-spring);
+          }
+          .dp-menu[hidden] { display: none; }
+          .dp-menu-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 8px 16px; border-bottom: 0.5px solid var(--dk-line); }
+          .dp-menu-title { font-size: 13px; font-weight: 600; }
+          .dp-commit, .dp-commit-go {
+            height: 28px; padding: 0 12px; border: 0; border-radius: 8px;
+            background: var(--dk-accent); color: var(--dk-accent-ink);
+            font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: filter 120ms ease, transform 120ms ease;
+          }
+          .dp-commit:hover, .dp-commit-go:hover { filter: brightness(1.08); }
+          .dp-commit:active, .dp-commit-go:active { transform: scale(0.98); }
+          /* Sized by its rows up to the menu's max height, then it scrolls. */
+          .dp-menu-list { flex: 0 1 auto; min-height: 0; overflow-y: auto; padding: 6px; }
+          .dp-menu-empty { margin: 0; padding: 20px 12px; font-size: 12px; color: var(--dk-ink-3); text-align: center; }
+          .dp-ver {
+            display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px; width: 100%;
+            /* Tonk's UI library gives every button a fixed height (35px); a row
+               must grow to its thumbnail. */
+            height: auto; min-height: 0;
+            box-sizing: border-box; padding: 8px; border: 0; border-radius: 10px; background: transparent;
+            color: inherit; font: inherit; text-align: left; cursor: pointer;
+          }
+          .dp-ver:hover { background: var(--dk-hover); }
+          .dp-ver-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding-top: 2px; }
+          .dp-ver-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .dp-ver-msg { font-size: 12px; color: var(--dk-ink-2); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+          .dp-ver-meta { font-size: 11px; color: var(--dk-ink-3); }
+          /* The thumbnail: a little page with a scaled-down picture of the content. */
+          .dp-thumb {
+            flex: none; position: relative; width: 56px; height: 72px; overflow: hidden;
+            border-radius: 6px; background: var(--dk-card);
+            box-shadow: 0 0 0 0.5px var(--dk-line-strong), 0 1px 2px rgba(0, 0, 0, 0.06);
+            display: flex; align-items: center; justify-content: center; color: var(--dk-ink-3);
+          }
+          .dp-thumb-doc {
+            position: absolute; left: 0; top: 0; width: 280px; padding: 18px;
+            transform: scale(0.2); transform-origin: 0 0; pointer-events: none;
+            font-size: 15px; line-height: 1.5; color: var(--dk-ink);
+          }
+          .dp-thumb-html {
+            position: absolute; left: 0; top: 0; width: 560px; height: 720px; border: 0;
+            transform: scale(0.1); transform-origin: 0 0; pointer-events: none; background: #fff;
+          }
+          .dp-thumb-grid { position: absolute; inset: 6px; border-collapse: collapse; table-layout: fixed; font-size: 4px; line-height: 1.6; }
+          .dp-thumb-grid td { border: 0.5px solid var(--dk-line-strong); overflow: hidden; white-space: nowrap; padding: 0 1px; }
+          /* The commit dialog: the shared confirm sheet with two fields. */
+          .dp-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dk-ink-2); }
+          .dp-field input, .dp-field textarea {
+            box-sizing: border-box; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px;
+            background: color-mix(in oklab, var(--dk-ink) 6%, transparent); color: var(--dk-ink);
+            font: inherit; font-size: 13px; outline: none; resize: vertical;
+          }
+          .dp-field textarea::placeholder { color: var(--dk-ink-3); }
+          .dp-field input:focus, .dp-field textarea:focus { box-shadow: inset 0 0 0 1.5px var(--dk-accent); }
+          .dp-commit-note { margin: 0; font-size: 12px; color: var(--dk-ink-3); }
+          .dp-commit-note[hidden] { display: none; }
+
+          /* Grid apps and HTML pages fill the body edge to edge. */
+          doc-tile grid-app { position: absolute; inset: 0; display: block; height: auto; }
+          doc-tile grid-app[hidden], .dp-html[hidden] { display: none; }
+          .dp-html { position: absolute; inset: 0; }
+          .dp-html tonk-display, .dp-html tonk-view, .dp-html tonk-portal { display: block; height: 100%; min-height: 0; }
+          .dp-html iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--dk-card); }
+          /* The portal keeps a spare blank frame beside the live one. */
+          .dp-html iframe:not([srcdoc]):not([src]) { display: none; }
+          /* The empty HTML document: a calm, centred placeholder. */
+          .dp-placeholder {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+            padding: 24px; text-align: center;
+          }
+          .dp-placeholder[hidden] { display: none; }
+          .dp-placeholder p { margin: 0; max-width: 360px; }
+          .dp-ph-title { font-size: 15px; font-weight: 600; color: var(--dk-ink); }
+          .dp-ph-body { font-size: 13px; color: var(--dk-ink-2); }
+          .dp-ph-note { font-size: 12px; color: var(--dk-ink-3); }
+          .dp-copy-prompt {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            height: 32px; margin: 8px 0 4px; padding: 0 14px; box-sizing: border-box;
+            border: 0; border-radius: 8px; background: var(--dk-accent); color: var(--dk-accent-ink);
+            font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+            transition: filter 120ms ease, transform 120ms ease;
+          }
+          .dp-copy-prompt:hover { filter: brightness(1.08); }
+          .dp-copy-prompt:active { transform: scale(0.98); }
+
+          /* The update notice: a small glass bar at the bottom of the window. */
+          .ws-update {
+            position: fixed; left: 50%; bottom: 16px; z-index: 100; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 12px;
+            padding: 6px 6px 6px 14px; border-radius: 12px;
+            background: var(--dk-glass-strong); color: var(--dk-ink);
+            -webkit-backdrop-filter: var(--dk-glass-blur); backdrop-filter: var(--dk-glass-blur);
+            border: 0.5px solid var(--dk-line-strong); box-shadow: var(--dk-shadow-pop);
+            font: 13px var(--dk-font);
+          }
+          .ws-update button {
+            height: 28px; padding: 0 12px; border: 0; border-radius: 8px;
+            background: var(--dk-accent); color: var(--dk-accent-ink);
+            font: inherit; font-weight: 500; cursor: pointer;
+          }
+
+          /* A narrow tile: the name and the buttons on the first line, the type
+             pills or the version info on a second line of their own. */
+          @container tile (max-width: 720px) {
+            .dp-head { padding: 10px 12px 11px 16px; grid-template-columns: minmax(0, 1fr) auto; row-gap: 10px; }
+            .dp-end { grid-column: 2; grid-row: 1; }
+            .dp-types, .dp-versions, .dp-version-of { grid-column: 1 / -1; grid-row: 2; justify-self: start; max-width: 100%; }
+            /* Pills wrap rather than scroll: a scroller would cut their edges. */
+            .dp-types { flex-wrap: wrap; row-gap: 6px; overflow: visible; }
+            .dp-types-label { display: none; }
+            .dp-menu { top: 96px; }
+            .dp-version-of { padding: 0 6px; margin-left: -6px; text-overflow: ellipsis; }
+          }
+          .dp-version-of { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+          /* Page dots under the tiles (phones, several tiles). */
+          .dp-dots { display: none; position: absolute; left: 0; right: 0; bottom: 14px; justify-content: center; gap: 6px; pointer-events: none; z-index: 5; }
+          .dp-dot { width: 6px; height: 6px; border-radius: 3px; background: var(--dk-ink-3); opacity: .45; transition: width 200ms var(--dk-ease), opacity 200ms ease; }
+          .dp-dot.is-on { width: 16px; opacity: .9; background: var(--dk-ink-2); }
+
+          /* -- quick open (the dashboard's \u2318K launcher) --------------------- */
+          .dt-search {
+            flex: none; display: flex; align-items: center; gap: 8px;
+            margin: 0 8px 6px; height: 30px; padding: 0 8px 0 10px; box-sizing: border-box;
+            border: 0; border-radius: 8px; cursor: pointer;
+            background: color-mix(in oklab, var(--dk-ink) 6%, transparent);
+            color: var(--dk-ink-3); font: inherit; font-size: 13px; text-align: left;
+            transition: background 120ms ease, color 120ms ease;
+          }
+          .dt-search:hover { background: color-mix(in oklab, var(--dk-ink) 9%, transparent); color: var(--dk-ink-2); }
+          .dt-search span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .dt-search kbd { flex: none; }
+          file-tree.is-collapsed .dt-search { display: none; }
+          dialog.qo-dialog { box-sizing: border-box; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 14vh 0 0; border: 0; color: var(--dk-ink); font: 13px var(--dk-font); background: var(--dk-scrim); }
+          dialog.qo-dialog:not([open]) { display: none; }
+          /* Set every axis: a style in Tonk's page makes dialogs flex columns. */
+          dialog.qo-dialog[open] { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+          dialog.qo-dialog::backdrop { background: transparent; }
+          dialog.qo-dialog:focus-visible { outline: none; }
+          .dk-launch-card {
+            background: var(--dk-glass-strong);
+            -webkit-backdrop-filter: var(--dk-glass-blur); backdrop-filter: var(--dk-glass-blur);
+            border: 0.5px solid var(--dk-line-strong); border-radius: var(--dk-radius-lg);
+            box-shadow: inset 0 1px 0 var(--dk-highlight), var(--dk-shadow-pop);
+            animation: dk-pop 220ms var(--dk-spring);
+          }
+          .qo-dialog kbd {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 5px;
+            border: 0.5px solid var(--dk-line-strong); border-radius: 5px;
+            background: var(--dk-hover); box-shadow: inset 0 -1px 0 var(--dk-line);
+            color: var(--dk-ink-2); font: 500 10.5px/1 var(--dk-font);
+          }
+          .dk-launch { z-index: 30; align-items: flex-start; padding-top: 14vh; }
+          .dk-launch[hidden] { display: none; }
+          .dk-launch-card {
+            width: 600px; max-width: 92%;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+          }
+          .dk-launch-q {
+            height: 54px; padding: 0 20px;
+            font: inherit; font-size: 16px; letter-spacing: -0.01em; color: var(--dk-ink);
+            background: transparent; border: none; outline: none;
+            border-bottom: 0.5px solid var(--dk-line);
+          }
+          .dk-launch-q::placeholder { color: var(--dk-ink-3); }
+          .dk-launch-list { display: flex; flex-direction: column; padding: 6px; max-height: min(56vh, 520px); overflow-y: auto; scrollbar-width: none; }
+          .dk-launch-scope { padding: 8px 12px 6px; }
+          .dk-launch-scope::first-letter { text-transform: uppercase; }
+          .dk-launch-item {
+            display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+            width: 100%; min-width: 0; height: auto; min-height: 42px; flex: none; box-sizing: border-box; overflow: hidden;
+            font: inherit; text-align: left; cursor: pointer;
+            padding: 7px 10px;
+            color: var(--dk-ink);
+            background: none; border: none; border-radius: 9px;
+            transition: background 80ms ease;
+          }
+          .dk-launch-item kbd { flex: none; }
+          .dk-launch-item:hover { background: var(--dk-hover); }
+          .dk-launch-item.is-sel { background: var(--dk-accent); color: var(--dk-accent-ink); }
+          .dk-launch-item.is-sel .dk-launch-hint, .dk-launch-item.is-sel .dk-launch-del { color: rgba(255, 255, 255, 0.82); }
+          .dk-launch-g {
+            width: 28px; height: 28px; flex: none; box-sizing: border-box;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            color: var(--dk-ink-2);
+            border: 0.5px solid var(--dk-line-strong);
+            border-radius: 8px;
+            background: var(--dk-card);
+            box-shadow: 0 0.5px 1.5px rgba(0, 0, 0, 0.08);
+          }
+          .dk-launch-item.is-sel .dk-launch-g { color: var(--dk-accent); border-color: transparent; }
+          /* A long label or hint truncates with an ellipsis; it never pushes
+             the row sideways (a <button> centers overflowing content, which
+             once hid a whole entry off both edges). */
+          .dk-launch-label {
+            flex: 0 1 auto; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            font-size: 13.5px; font-weight: 500;
+          }
+          .dk-launch-hint {
+            flex: 1 1 auto; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            font-size: 12.5px; color: var(--dk-ink-3);
+          }
+          .dk-launch-foot {
+            display: flex; flex-wrap: wrap; gap: 6px 16px;
+            padding: 9px 16px;
+            font-size: 12px; color: var(--dk-ink-3);
+            border-top: 0.5px solid var(--dk-line);
+            background: var(--dk-hover);
+          }
+          .dk-launch-foot span { display: inline-flex; align-items: center; gap: 4px; }
+          .dk-launch-label::first-letter { text-transform: uppercase; }
+          .dk-launch-none { padding: 16px 12px; font-size: 13px; color: var(--dk-ink-3); }
+
+          @media (prefers-reduced-motion: reduce) {
+            .deck-root *, .deck-root *::after { transition: none !important; animation: none !important; }
+          }
+          /* Browsers without backdrop-filter get opaque sheets instead of
+             unreadable translucent ones. */
+          @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            file-tree, .dk-confirm-card { background: var(--dk-raised); }
+          }
+
+          /* == Quiet ink ======================================================
+             Neutral and black-first: a chromeless sidebar on the canvas, tiles
+             as hairline cards, ink primary buttons, monospace for technical
+             detail, one sand accent for selection. Later rules override the
+             dashboard-derived ones above. */
+          .deck-root kbd {
+            font-family: var(--dk-mono); font-weight: 400;
+            background: var(--dk-bg); border: 1px solid var(--dk-line); box-shadow: none; color: var(--dk-ink-2);
+          }
+          /* Labels: monospace, sentence case (never capitals or small caps). */
+          .dp-types-label, .dp-menu-title, .dk-confirm-title {
+            font-family: var(--dk-mono); font-size: 12px; font-weight: 400; line-height: 1;
+            letter-spacing: 0; text-transform: none; font-variant: normal; color: var(--dk-ink-3);
+          }
+
+          /* Sidebar: no surface and no edge of its own; it is the canvas. */
+          file-tree { background: transparent; border-right: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+          /* Open, it sits inset from the window's top-left corner by about 0.618
+             of the gap beside the tiles (32px): ~20px to the content. It eases
+             out with the width when the sidebar collapses to its rail. */
+          file-tree { box-sizing: border-box; transition: width 240ms var(--dk-ease), padding-left 240ms var(--dk-ease); }
+          file-tree:not(.is-collapsed) { padding: 14px 0 0 14px; }
+          /* Collapsed, the rail fills to the top and its icon stays level with
+             the hide icon (y = 32), so the icon only moves left. */
+          file-tree.is-collapsed .dt-rail { padding-top: 32px; }
+          .dt-head { padding: 6px 8px 6px 16px; }
+          .dt-search { background: var(--dk-card); border: 1px solid var(--dk-line); margin: 0 8px 4px; }
+          .dt-search:hover { background: var(--dk-card); border-color: var(--dk-line-strong); color: var(--dk-ink-3); }
+          /* No section label above the tree: the list starts after a small gap. */
+          .dt-list { padding-top: 8px; }
+          .dt-row { color: var(--dk-ink-2); }
+          .dt-folder { color: var(--dk-ink); }
+          .dt-folder .dt-name, .dt-folder .dt-input { font-weight: 500; font-size: 13px; }
+          /* Selected: a neutral fill and a short sand bar inside the row's left
+             edge (a background layer, so nothing moves and no pseudo-element
+             clashes with the drag markers). */
+          .dt-row.is-active, .dt-row.is-active:hover {
+            background: linear-gradient(var(--dk-accent), var(--dk-accent)) left center / 2px 16px no-repeat, var(--dk-select);
+            color: var(--dk-ink); font-weight: 500;
+          }
+          .dt-row.is-active .dt-glyph { color: var(--dk-ink-2); }
+
+          /* Tiles: hairline cards on the canvas, also when only one is open. */
+          .dp-strip { padding: 12px 12px 12px 32px; box-sizing: border-box; background: var(--dk-bg); }
+          doc-pane.is-multi .dp-strip { padding: 12px 0 12px 32px; background: var(--dk-bg); }
+          /* The gap beside the sidebar closes with it: the collapsed rail is
+             already the margin. It eases in step with the sidebar's width. */
+          .dp-strip { transition: padding-left 240ms var(--dk-ease); }
+          file-tree.is-collapsed ~ doc-pane .dp-strip { padding-left: 0; }
+          doc-tile, doc-pane.is-multi doc-tile {
+            border: 1px solid var(--dk-line); border-radius: var(--dk-radius-lg); box-shadow: none; overflow: hidden;
+          }
+          /* The active tile: one step darker hairline, nothing more. */
+          doc-pane.is-multi doc-tile.is-active { border-color: var(--dk-line-active); box-shadow: none; }
+          doc-pane.is-multi .dp-grip:hover::after, doc-pane.is-multi .dp-grip.is-resizing::after { background: var(--dk-accent-line); }
+          .dp-grip-pct { background: var(--dk-card); -webkit-backdrop-filter: none; backdrop-filter: none; border: 1px solid var(--dk-line); box-shadow: var(--dk-shadow-pop); font-family: var(--dk-mono); }
+
+          /* The tile bar. */
+          .dp-head { border-bottom: 1px solid var(--dk-line); }
+          .dp-path { font-family: var(--dk-mono); font-size: 12px; color: var(--dk-ink-3); }
+          /* Breadcrumb parts reveal their folder in the sidebar. */
+          .dp-crumb { border: 0; padding: 0; margin: 0; background: none; height: auto; min-height: 0; font: inherit; color: inherit; cursor: pointer; border-radius: 3px; }
+          .dp-crumb:hover { color: var(--dk-ink); text-decoration: underline; text-underline-offset: 2px; }
+          .dp-tool, .dp-link {
+            width: 28px; height: 28px; border: 1px solid var(--dk-line); border-radius: 7px;
+            background: var(--dk-card); color: var(--dk-ink-2);
+          }
+          .dp-tool:hover, .dp-link:hover { background: var(--dk-soft); border-color: var(--dk-line-strong); color: var(--dk-ink); }
+          .dp-end { gap: 6px; }
+
+          /* Type switcher: one segmented control; the current type is raised. */
+          .dp-types-label { margin-right: 10px; }
+          /* Every pill has the same 1px border (only the selected one shows it),
+             so all pills are the same size and the inset is even all round. */
+          .dp-seg {
+            display: inline-flex; align-items: center; gap: 2px; padding: 3px;
+            border: 1px solid var(--dk-line); border-radius: 10px; background: var(--dk-soft);
+          }
+          .dp-pill {
+            height: 26px; padding: 0 10px 0 8px; gap: 6px; border-radius: 7px; box-sizing: border-box;
+            border: 1px solid transparent; box-shadow: none;
+            background: transparent; color: var(--dk-ink-2); font-size: 12px; font-weight: 400; line-height: 1;
+          }
+          .dp-pill svg { color: var(--dk-ink-3); }
+          .dp-pill:hover { background: var(--dk-hover); color: var(--dk-ink); }
+          .dp-pill.is-on, .wa-dark .dp-pill.is-on {
+            background: var(--dk-card); color: var(--dk-ink); font-weight: 500;
+            border-color: var(--dk-line); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+          }
+          .wa-dark .dp-pill.is-on { background: var(--dk-raised); }
+          .dp-pill.is-on svg { color: var(--dk-ink); }
+
+          /* Versions button and menu. */
+          .dp-versions-btn {
+            height: 28px; padding: 0 8px 0 10px; border-radius: 7px;
+            border: 1px solid var(--dk-line); background: var(--dk-soft); font-weight: 500;
+          }
+          .dp-versions-btn:hover, .dp-versions-btn[aria-expanded="true"] { background: var(--dk-card); border-color: var(--dk-line-strong); }
+          .dp-count { height: 18px; line-height: 16px; border-radius: 4px; border: 1px solid var(--dk-line); background: var(--dk-card); font-family: var(--dk-mono); font-size: 11px; }
+          .dp-version-of { font-family: var(--dk-mono); font-size: 11.5px; }
+          .dp-menu {
+            background: var(--dk-card); -webkit-backdrop-filter: none; backdrop-filter: none;
+            border: 1px solid var(--dk-line); border-radius: var(--dk-radius-lg); box-shadow: var(--dk-shadow-pop);
+          }
+          .dp-menu-head { border-bottom: 1px solid var(--dk-line); padding: 10px 10px 10px 16px; }
+          .dp-ver:hover { background: var(--dk-soft); }
+          .dp-thumb { border-radius: 4px; box-shadow: 0 0 0 1px var(--dk-line); }
+          .dp-ver-meta { font-family: var(--dk-mono); }
+          .dp-field input, .dp-field textarea { background: var(--dk-soft); box-shadow: inset 0 0 0 1px var(--dk-line); }
+          .dp-field input:focus, .dp-field textarea:focus { box-shadow: inset 0 0 0 1.5px var(--dk-accent-line); }
+
+          /* Primary actions are ink; one per view. */
+          .dp-commit, .dp-commit-go, .dp-copy-prompt, .dp-new, .ws-update button {
+            background: var(--dk-primary); color: var(--dk-primary-ink); box-shadow: none; filter: none;
+          }
+          .dp-commit:hover, .dp-commit-go:hover, .dp-copy-prompt:hover, .dp-new:hover, .ws-update button:hover {
+            filter: none; background: color-mix(in oklab, var(--dk-primary) 85%, var(--dk-bg));
+          }
+          .ws-update { background: var(--dk-card); border: 1px solid var(--dk-line); -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+          /* The empty HTML document. */
+          .dp-placeholder .dp-empty-icon {
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;
+            border-radius: 10px; border: 1px solid var(--dk-line); background: var(--dk-soft); color: var(--dk-ink-2);
+          }
+          .dp-placeholder .dp-empty-icon svg { width: 20px; height: 20px; }
+          .dp-ph-note { font-family: var(--dk-mono); font-size: 11px; }
+
+          /* Dialogs: solid cards; destructive is an outlined button with red text. */
+          .dk-confirm-card { background: var(--dk-card); -webkit-backdrop-filter: none; backdrop-filter: none; border: 1px solid var(--dk-line); box-shadow: var(--dk-shadow-pop); }
+          .dk-confirm-del { background: var(--dk-card); color: var(--dk-danger); border: 1px solid var(--dk-line); box-shadow: none; }
+          .dk-confirm-del:hover { filter: none; background: color-mix(in oklab, var(--dk-danger) 8%, var(--dk-card)); }
+          .dk-confirm-cancel { border: 1px solid var(--dk-line); box-shadow: none; }
+
+          /* Quick open: neutral selection, monospace paths. */
+          .dk-launch-card { background: var(--dk-card); border: 1px solid var(--dk-line); }
+          .dk-launch-item.is-sel { background: var(--dk-select); color: var(--dk-ink); }
+          .dk-launch-item.is-sel .dk-launch-hint { color: var(--dk-ink-3); }
+          .dk-launch-g, .dk-launch-item.is-sel .dk-launch-g { color: var(--dk-ink-2); border: 1px solid var(--dk-line); box-shadow: none; background: var(--dk-card); }
+          .dk-launch-hint { font-family: var(--dk-mono); font-size: 11.5px; }
+          .dk-launch-foot { background: var(--dk-soft); border-top: 1px solid var(--dk-line); }
+
+          /* Narrow tiles: the switcher may wrap inside its outline. */
+          @container tile (max-width: 720px) {
+            .dp-seg { flex-wrap: wrap; }
+          }
+          @media (max-width: 760px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
+            .dp-strip, doc-pane.is-multi .dp-strip, file-tree.is-collapsed ~ doc-pane .dp-strip { padding: 8px; }
+          }
+
+          /* -- phone ---------------------------------------------------------
+             The sidebar becomes a compact bar on top; its list drops down. */
+          .dt-mobile-bar { display: none; }
+          @media (max-width: 760px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
+            .deck-root { flex-direction: column; height: var(--dk-mobile-height, 100dvh); bottom: auto; }
+            .deck-root file-tree, .deck-root file-tree.is-collapsed {
+              width: 100%; height: auto; flex: none; z-index: 20; margin: 0;
+              border: 0; border-bottom: 0.5px solid var(--dk-line-strong); border-radius: 0;
+              overflow: visible; transition: none;
+              padding: env(safe-area-inset-top, 0px) 0 0;
+            }
+            .dt-mobile-bar { display: flex; align-items: center; gap: 6px; min-height: 54px; padding: 0 8px; }
+            .dt-mobile-bar button {
+              display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+              min-height: 40px; padding: 0 12px; border: 0.5px solid var(--dk-line-strong);
+              border-radius: 10px; background: var(--dk-hover); color: var(--dk-ink);
+              box-shadow: inset 0 1px 0 var(--dk-highlight);
+              font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer;
+            }
+            .dt-mobile-bar .dt-mobile-toggle { margin-right: auto; border-color: transparent; }
+            .deck-root file-tree .dt-head, .deck-root file-tree .dt-list, .deck-root file-tree .dt-rail, .deck-root file-tree .dt-search { display: none; }
+            .deck-root file-tree[data-mobile-open] .dt-head {
+              display: flex; position: absolute; top: 100%; left: 0; right: 0;
+              height: 48px; background: var(--dk-glass-strong); border-bottom: 0.5px solid var(--dk-line);
+              -webkit-backdrop-filter: var(--dk-glass-blur); backdrop-filter: var(--dk-glass-blur);
+            }
+            .deck-root file-tree[data-mobile-open] .dt-list {
+              display: block; position: absolute; top: calc(100% + 48px); left: 0; right: 0;
+              max-height: min(55dvh, 420px); overflow: auto; padding: 6px;
+              background: var(--dk-glass-strong); border-bottom: 0.5px solid var(--dk-line-strong); box-shadow: var(--dk-shadow-pop);
+              -webkit-backdrop-filter: var(--dk-glass-blur); backdrop-filter: var(--dk-glass-blur);
+            }
+            .deck-root file-tree .dt-hide { display: none; }
+            .dt-head .dt-btn, .dt-row { min-height: 44px; }
+            .dt-head .dt-btn { width: 44px; }
+            .dt-row .dt-x { opacity: 1; min-width: 36px; min-height: 36px; }
+            .dt-input { font-size: 16px; }
+            .deck-root doc-pane { flex: 1; min-height: 0; width: 100%; }
+            /* Several tiles are pages: one fills the screen, a swipe moves to the
+               next with native momentum and snaps (one tile per swipe). Docs scroll
+               vertically, tiles horizontally, so the two never fight. A swipe that
+               starts on a doc comes from its frame (files-swipe, doc-pane.js). */
+            doc-pane.is-multi .dp-strip {
+              gap: 0; padding: 8px 0; overflow-x: auto; overflow-y: hidden;
+              scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none;
+            }
+            doc-pane.is-multi .dp-strip::-webkit-scrollbar { display: none; }
+            doc-pane.is-multi doc-tile, doc-pane.is-multi doc-tile[data-width] {
+              flex: 0 0 calc(100% - 16px); width: auto; min-width: 0; margin: 0 8px;
+              scroll-snap-align: center; scroll-snap-stop: always;
+            }
+            doc-pane.is-multi .dp-grip { display: none; }
+            doc-pane.is-multi .dp-dots { display: flex; }
+            .dp-head { padding: 10px 16px 11px; grid-template-columns: minmax(0, 1fr) auto; row-gap: 10px; }
+            .dp-end { grid-column: 2; grid-row: 1; }
+            .dp-types, .dp-versions, .dp-version-of { grid-column: 1 / -1; grid-row: 2; justify-self: start; max-width: 100%; }
+            .dp-types { flex-wrap: wrap; row-gap: 6px; }
+          }
+        </style>
+
+        <div class="deck-data" hidden>
+          <tonk-display model=component></tonk-display>
+          <tonk-display model=file/node></tonk-display>
+          <tonk-display model=tonk:identity entity=state:self view=selfrow></tonk-display>
+          <tonk-display model=tonk/repository view=spacerow></tonk-display>
+          <tonk-display model=file/type></tonk-display>
+          <tonk-display model=file/filled></tonk-display>
+          <tonk-display model=file/version></tonk-display>
+          <tonk-display model=tonk/agent-invite view=inviterow></tonk-display>
+        </div>
+
+        <file-tree
+          oncreatenode=file/create-node
+          onrenamenode=file/rename-node
+          onmovenode=file/move-node
+          ondeletenode=file/delete-node></file-tree>
+        <doc-pane onsettype=file/set-type oncommit=file/commit></doc-pane>
+      </div>
