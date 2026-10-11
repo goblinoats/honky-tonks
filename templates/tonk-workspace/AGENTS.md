@@ -65,14 +65,14 @@ xyz.tonk.portal!:
     ...
 ```
 
-The page runs in a sandboxed frame with `window.tonk` for the space's data, like the tonknote and grid apps. Follow the style section: copy the `--dk-*` values into the frame's own `:root`, with dark values under `prefers-color-scheme: dark`.
+The page runs in a sandboxed frame (a `data:` URL, not a portal: WebKit refuses a nested `srcdoc` frame) with `window.tonk` for the space's data. The workspace supplies `window.tonk` through `postMessage`, with only `ready`, `query`, `transact` and `subscribe`: use `transact({ claims })` to write, fall back to polling when `subscribe` fails (it always does in WebKit), and open links with `window.open`. Follow the style section: copy the `--dk-*` values into the frame's own `:root`, with dark values under `prefers-color-scheme: dark`.
 
 ## Source
 
 The workspace is the Tonk Workspace template, installed in file order:
 
 - `1-model.yaml`: concepts, commands and rules.
-- `2-components.yaml`: the page components (`file-tree`, `doc-pane`, `quick-open`, `hscroll`, the note editor host and the table and spreadsheet app) and the `id:tonknote/app` editor portal.
+- `2-components.yaml`: the page components (`file-tree`, `doc-pane`, `quick-open`, `hscroll`, the note editor host and the table and spreadsheet app) and the `id:tonknote/app` editor page (shown in a `data:` URL frame, not as a portal).
 - `3-views.yaml`: the views, the file address route and the workspace instance.
 - `4-agents.yaml`: this guide.
 
